@@ -1,0 +1,7 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "fcst_valid_time"
+    ],
+    "calendar": "proleptic_gregorian",
+    "units": "days since 2024-04-24 06:00:00"
+}

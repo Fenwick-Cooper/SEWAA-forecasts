@@ -1,0 +1,9 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "time",
+        "fcst_valid_time",
+        "threshold",
+        "latitude",
+        "longitude"
+    ]
+}

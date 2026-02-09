@@ -45,6 +45,8 @@ minLat = -19.85  # IMERG grid is offset by 0.05 degrees
 minLon = 25.05
 
 # The latitude and longitude we are aiming to get
+nLon = 352
+nLat = 384
 IMERG_resolution = 0.1  # degrees
 latitude = minLat + np.arange(nLat)*IMERG_resolution
 longitude = minLon + np.arange(nLon)*IMERG_resolution

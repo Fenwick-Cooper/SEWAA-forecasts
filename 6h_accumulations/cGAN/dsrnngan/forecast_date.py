@@ -192,7 +192,7 @@ netcdf_dict["time_data"][0] = start_times[0]
 # generate output and input valid time indices using enumerate(...)
 for out_time_idx, in_time_idx in enumerate(range(start_hour//HOURS, end_hour//HOURS)):
     # copy across valid_time from input file
-    netcdf_dict["valid_time_data"][0, out_time_idx] = valid_times[out_time_idx]
+    netcdf_dict["valid_time_data"][0, out_time_idx] = valid_times[in_time_idx]
     field_arrays = []
 
     # the contents of the next loop are v. similar to load_fcst from data.py,
@@ -213,11 +213,11 @@ for out_time_idx, in_time_idx in enumerate(range(start_hour//HOURS, end_hour//HO
         nc_in = nc.Dataset(nc_in_path, mode="r")
         
         # grab start and end of 6-hour block in one operation
-        temp_mean = nc_in[f"{field}_ensemble_mean"][out_time_idx:out_time_idx+2, :, :]  # 2 x lat x lon
+        temp_mean = nc_in[f"{field}_ensemble_mean"][in_time_idx:in_time_idx+2, :, :]  # 2 x lat x lon
         temp_start_mean = temp_mean[0, :, :]  # lat x lon, start of timestep
         temp_end_mean = temp_mean[1, :, :]  # lat x lon, end of timestep
 
-        temp_std = nc_in[f"{field}_ensemble_standard_deviation"][out_time_idx:out_time_idx+2, :, :]  # 2 x lat x lon
+        temp_std = nc_in[f"{field}_ensemble_standard_deviation"][in_time_idx:in_time_idx+2, :, :]  # 2 x lat x lon
         temp_start_std = temp_std[0, :, :]  # lat x lon, start of timestep
         temp_end_std = temp_std[1, :, :]  # lat x lon, end of timestep
 
@@ -264,7 +264,10 @@ for out_time_idx, in_time_idx in enumerate(range(start_hour//HOURS, end_hour//HO
                 data[:, :, 2] -= fcst_norm[field]["mean"]
                 data /= fcst_norm[field]["std"]
             elif field in nonnegative_fields:
-                data /= fcst_norm[field]["max"]
+                if (field == "mucape"):
+                    data /= fcst_norm["cape"]["max"]  # XXX Desparate hack, remove with a newer model.
+                else:
+                    data /= fcst_norm[field]["max"]
             else:
                 # winds
                 data /= max(-fcst_norm[field]["min"], fcst_norm[field]["max"])

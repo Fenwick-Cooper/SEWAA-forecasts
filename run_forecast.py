@@ -73,7 +73,7 @@ def parseArguments():
     parser.add_argument('--date', help='Forecast initialisation date (YYYYMMDD)',default=None,type=str)
     parser.add_argument('--time', help='Forecast initialisation time (HHMM)',default=None,type=str)    
     parser.add_argument('--delete_forecasts', help='Should forecasts be deleted or not (Y/N)',default=None,type=str)
-    parser.add_argument('--disable_ELR', help='If this option is selected ELR forecasts are not run',nargs='*',type=str)
+    #parser.add_argument('--disable_ELR', help='If this option is selected ELR forecasts are not run',nargs='*',type=str)
     args = parser.parse_args()
     
     # Parse the accumulation
@@ -156,9 +156,10 @@ def parseArguments():
             delete_forecasts = True
         
     # Parse disable_ELR
-    run_ELR = True  # Default
-    if (args.disable_ELR is not None):
-        run_ELR = False
+    run_ELR = False  # ELR is currently not available for Madagascar north
+#     run_ELR = True  # Default
+#     if (args.disable_ELR is not None):
+#         run_ELR = False
     
     return accumulation_time, year, month, day, hour, minute, delete_forecasts, run_ELR
 
@@ -284,9 +285,11 @@ if __name__=='__main__':
         else:
             print(f"Copying 6h accumulation data, {file_name}, from gbmc")
             print(f"to {IFS_data_path_6h}/.")
-            cp = subprocess.run(["scp",
-                                 f"gbmc@136.156.130.165:/data/Operational/{file_name}",
-                                 IFS_data_path_6h])  
+            
+            # Madagascar_north data can be obtained using curl
+            cp = subprocess.run(["curl",
+                                 f"http://megacorr.dynu.net/ICPAC/Madagascar_north_IFS/{file_name}",
+                                 "-o",f"{IFS_data_path_6h}/{file_name}"])
             if (cp.returncode != 0):
                 print(f"Unable to copy {file_name} from gbmc.")
                 sys.exit()
@@ -305,9 +308,11 @@ if __name__=='__main__':
         else:
             print(f"Copying 24h accumulation data, {file_name}, from gbmc")
             print(f"to {IFS_data_path_24h}/.")
-            cp = subprocess.run(["scp",
-                                 f"gbmc@136.156.130.165:/data/Operational_7d/{file_name}",
-                                 IFS_data_path_24h])
+            
+            # Madagascar_north data can be obtained using curl
+            cp = subprocess.run(["curl",
+                                 f"http://megacorr.dynu.net/ICPAC/Madagascar_north_IFS/{file_name}",
+                                 "-o",f"{IFS_data_path_6h}/{file_name}"])
             if (cp.returncode != 0):
                 print(f"Unable to copy {file_name} from gbmc.")
                 sys.exit()

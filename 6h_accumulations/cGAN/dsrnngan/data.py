@@ -16,9 +16,9 @@ FCST_PATH = data_paths["GENERAL"]["FORECAST_PATH"]
 CONSTANTS_PATH = data_paths["GENERAL"]["CONSTANTS_PATH"]
 NORMALISATION_PATH = data_paths["GENERAL"]["NORMALISATION_PATH"]
 
-all_fcst_fields = ['cape', 'cp', 'mcc', 'sp', 'ssr', 't2m', 'tciw', 'tclw', 'tcrw', 'tcw', 'tcwv', 'tp', 'u700', 'v700']
+all_fcst_fields = ['mucape', 'cp', 'mcc', 'sp', 'ssr', 't2m', 'tciw', 'tclw', 'tcrw', 'tcw', 'tcwv', 'tp', 'u700', 'v700']
 accumulated_fields = ['cp', 'ssr', 'tp']
-nonnegative_fields = ['cape', 'cp', 'mcc', 'sp', 'ssr', 't2m', 'tciw', 'tclw', 'tcrw', 'tcw', 'tcwv', 'tp']
+nonnegative_fields = ['mucape', 'cp', 'mcc', 'sp', 'ssr', 't2m', 'tciw', 'tclw', 'tcrw', 'tcw', 'tcwv', 'tp']
 
 HOURS = 6  # 6-hr data
 

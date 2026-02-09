@@ -35,8 +35,19 @@ hour = int(sys.argv[2])
 
 # %%
 # Define the latitude and longitude arrays for later
-latitude = np.arange(-13.65, 24.7, 0.1)
-longitude = np.arange(19.15, 54.3, 0.1)
+
+# ICPAC
+# latitude = np.arange(-13.65, 24.7, 0.1)
+# longitude = np.arange(19.15, 54.3, 0.1)
+
+# Madagascar_north
+minLat = -19.85  # IMERG grid is offset by 0.05 degrees
+minLon = 25.05
+
+# The latitude and longitude we are aiming to get
+IMERG_resolution = 0.1  # degrees
+latitude = minLat + np.arange(nLat)*IMERG_resolution
+longitude = minLon + np.arange(nLon)*IMERG_resolution
 
 # Some setup
 read_config.set_gpu_mode()  # set up whether to use GPU, and mem alloc mode

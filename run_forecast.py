@@ -291,7 +291,7 @@ if __name__=='__main__':
                                  f"http://megacorr.dynu.net/ICPAC/Madagascar_north_IFS/{file_name}",
                                  "-o",f"{IFS_data_path_6h}/{file_name}"])
             if (cp.returncode != 0):
-                print(f"Unable to copy {file_name} from gbmc.")
+                print(f"Unable to copy {file_name} from megacorr.dynu.net.")
                 sys.exit()
         
     elif (accumulation_time == 24):
@@ -314,7 +314,7 @@ if __name__=='__main__':
                                  f"http://megacorr.dynu.net/ICPAC/Madagascar_north_IFS/{file_name}",
                                  "-o",f"{IFS_data_path_6h}/{file_name}"])
             if (cp.returncode != 0):
-                print(f"Unable to copy {file_name} from gbmc.")
+                print(f"Unable to copy {file_name} from megacorr.dynu.net.")
                 sys.exit()
         
     else:

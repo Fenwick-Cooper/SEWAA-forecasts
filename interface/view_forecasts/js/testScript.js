@@ -3,7 +3,8 @@
 let modelName = "6h accumulation"
 // Regions: Burundi, Djibouti, Eritrea, Ethiopia, Kenya, Rwanda, Somalia, South Sudan,
 //          Sudan, Tanzania, Uganda, ICPAC, East Africa, All.
-let regionName = "East Africa";
+// There is ony one region for the Madagascar north model
+let regionName = "Madagascar north";
 let units = "mm/6h";			// Can be mm/h, mm/6h, mm/day, mm/week
 let style = "Default";			// Can be "Default", "ICPAC", "KMD", "EMI", "ECMWF".
 let plotType="Probability";		// Can be "Probability", "Values", "Mean" or "Std".
@@ -50,12 +51,12 @@ async function modelSelect() {
 }
 
 // Called by the regionSelect menu
-function regionSelect() {
-	regionName = document.getElementById("regionSelect").value;
-	drawMarker = false;	// No longer draw the histograms
-	document.getElementById("removeHistBttn").style.display = "none";	// Hide the button
-	drawPlots();
-}
+// function regionSelect() {
+// 	regionName = document.getElementById("regionSelect").value;
+// 	drawMarker = false;	// No longer draw the histograms
+// 	document.getElementById("removeHistBttn").style.display = "none";	// Hide the button
+// 	drawPlots();
+// }
 
 // Called by the initYearSelect, initMonthSelect,initDaySelect and initTimeSelect menus
 async function initTimeSelect() {
@@ -558,7 +559,7 @@ function initControls() {
 	
 	document.getElementById("modelSelect").value = modelName;
 	
-	document.getElementById("regionSelect").value = regionName;
+	// document.getElementById("regionSelect").value = regionName;
 	
 	document.getElementById("styleSelect").value = style;
 	

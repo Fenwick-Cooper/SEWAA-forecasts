@@ -4,7 +4,6 @@
 #
 # Requirements:
 #
-#    Access to the ECMWF computer gbmc@136.156.130.165.
 #    Conda environment for cGAN installed and activated.
 #
 # Before use:
@@ -43,7 +42,6 @@ def parseArguments():
 
     parser = argparse.ArgumentParser(description="""Requirements:
 
-    Access to the ECMWF computer gbmc@136.156.130.165.
     Conda environment for cGAN installed and activated.
 
  Before use:
@@ -269,7 +267,7 @@ if __name__=='__main__':
     cGAN_counts_path_24h = f"{cGAN_counts_path}/counts_24h"
     
     
-    # Download from gbmc
+    # Download the IFS data
     
     if (accumulation_time == 6):
         
@@ -283,7 +281,7 @@ if __name__=='__main__':
             print(f"{IFS_data_path_6h}/{file_name} already exists.")
     
         else:
-            print(f"Copying 6h accumulation data, {file_name}, from gbmc")
+            print(f"Copying 6h accumulation data, {file_name}, from megacorr.dynu.net")
             print(f"to {IFS_data_path_6h}/.")
             
             # Madagascar_north data can be obtained using curl
@@ -306,7 +304,7 @@ if __name__=='__main__':
             print(f"{IFS_data_path_24h}/{file_name} already exists.")
     
         else:
-            print(f"Copying 24h accumulation data, {file_name}, from gbmc")
+            print(f"Copying 24h accumulation data, {file_name}, from megacorr.dynu.net")
             print(f"to {IFS_data_path_24h}/.")
             
             # Madagascar_north data can be obtained using curl

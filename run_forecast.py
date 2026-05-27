@@ -80,10 +80,10 @@ def parseArguments():
     # Parse the accumulation
     if (args.accumulation is not None):
         
-        if (args.accumulation == '6h') or (args.accumulation == '6'):
+        if (args.accumulation == '6h') or (int(args.accumulation) == 6):
             accumulation_time = 6
             
-        elif (args.accumulation == '24h') or (args.accumulation == '24'):
+        elif (args.accumulation == '24h') or (int(args.accumulation) == 24):
             accumulation_time = 24
             
         else:

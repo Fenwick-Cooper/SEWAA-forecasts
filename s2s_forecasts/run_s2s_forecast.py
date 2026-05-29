@@ -18,7 +18,7 @@ FCST_OUT_DIR = "../interface/view_forecasts/data/counts_s2s"
 
 
 #Global settings
-lead_time_weeks = [1,2,3]
+lead_times_weeks = [1,2,3]
 data_source = 'Oxford'
 SHAPEFILE_NAME = "admin1_merged_KeEtRwUg.gpkg"
 
@@ -61,7 +61,7 @@ def main():
         month,
         day,
         data_source=data_source,
-        lead_time_weeks=lead_time_weeks,
+        lead_times_weeks=lead_times_weeks,
         delete_grib=True,
         RAW_FOLDER=RAW_S2S_DATA_DIR,
         PROC_FOLDER=PROC_S2S_DATA_DIR
@@ -72,7 +72,7 @@ def main():
         year,
         month,
         day,
-        lead_time_weeks=lead_time_weeks,
+        lead_times_weeks=lead_times_weeks,
         IN_FOLDER=PROC_S2S_DATA_DIR,
         OUT_FOLDER=PROC_S2S_DATA_DIR,
         SHAPEFILE_FOLDER=SHAPEFILE_DIR,
@@ -85,7 +85,7 @@ def main():
         year,
         month,
         day,
-        lead_time_weeks=lead_time_weeks,
+        lead_times_weeks=lead_times_weeks,
         bins='default',
         IDR_MODEL_FOLDER='./idr_models',
         shapefile_name=SHAPEFILE_NAME,
@@ -99,7 +99,7 @@ def main():
         year,
         month,
         day,
-        lead_time_weeks,
+        lead_times_weeks,
         RAW_S2S_DATA_DIR,
         PROC_S2S_DATA_DIR,
         REG_MEAN_DATA_DIR,

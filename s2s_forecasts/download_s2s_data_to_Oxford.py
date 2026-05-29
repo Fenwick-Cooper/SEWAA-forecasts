@@ -175,7 +175,7 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
     print("Dowloaded ECMWF S2S data for date: ", f"{year}-{month:02d}-{day:02d}")
 
 
-def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True, IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data"):
+def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=True, IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data"):
     """
     Process downloaded ECMWF S2S GRIB data into weekly NetCDF files.
 
@@ -191,7 +191,7 @@ def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True
         Forecast initialization month.
     day : int
         Forecast initialization day.
-    lead_time_weeks : list[int], optional
+    lead_times_weeks : list[int], optional
         Lead weeks to process, by default [1, 2, 3].
     delete_grib : bool, optional
         Whether to delete the GRIB and index files after processing.
@@ -204,6 +204,8 @@ def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True
     -------
     None
     """
+    os.makedirs(OUT_FOLDER, exist_ok=True)
+
     #Open GRIB file with xarray
     fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tprate.grib")
     try:
@@ -217,8 +219,8 @@ def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True
     ds = ds*3600*168 #Convert to m/week from m/s
     ds = ds*1000 #Convert to mm/week from m/week
 
-    for i, week in enumerate(lead_time_weeks):
-        ds_week = ds.isel(step=i) #Select the correct step for this lead week. This assumes the steps are in the same order as the lead_time_weeks list, which should be true if the request is built correctly.
+    for i, week in enumerate(lead_times_weeks):
+        ds_week = ds.isel(step=i) #Select the correct step for this lead week. This assumes the steps are in the same order as the lead_times_weeks list, which should be true if the request is built correctly.
         ds_week_mean = ds_week.mean('number').rename({'tprate': 'tp_mean'}) #Renaming variable to avoid confusion with std
         ds_week_mean['tp_std'] = ds_week.std('number').tprate #Calculate std across ensemble members and add as new variable in same dataset
         ds_week_mean.attrs['units'] = 'mm/week'
@@ -233,7 +235,7 @@ def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True
     if delete_grib:
         delete_grib_and_index(fname)
 
-def download_and_process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True, RAW_FOLDER="./s2s_data", PROC_FOLDER="./s2s_data"):
+def download_and_process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=True, RAW_FOLDER="./s2s_data", PROC_FOLDER="./s2s_data"):
     """
     Download ECMWF S2S data and process it into NetCDF outputs.
 
@@ -248,7 +250,7 @@ def download_and_process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], del
         Forecast initialization month.
     day : int
         Forecast initialization day.
-    lead_time_weeks : list[int], optional
+    lead_times_weeks : list[int], optional
         Lead weeks to download and process, by default [1, 2, 3].
     delete_grib : bool, optional
         Whether to delete the raw GRIB file after processing.
@@ -264,8 +266,8 @@ def download_and_process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], del
     
     print("Starting download and processing of S2S data for date: ", f"{year}-{month:02d}-{day:02d}")
     
-    download_s2s_data_ecmwf(year, month, day, lead_time_weeks=lead_time_weeks, OUT_FOLDER=RAW_FOLDER)
-    process_s2s_data(year, month, day, lead_time_weeks=lead_time_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
+    download_s2s_data_ecmwf(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
+    process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

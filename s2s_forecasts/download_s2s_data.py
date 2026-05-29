@@ -197,7 +197,7 @@ def download_s2s_data_oxford(year, month, day, lead_times_weeks=[1,2,3], OUT_FOL
             print(f"Unable to copy {fname} from {file_URL}. HTTP error {return_value.stdout}.")
 
 
-def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True, IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data"):
+def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=True, IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data"):
     """
     Process downloaded ECMWF S2S GRIB data into weekly NetCDF files.
 
@@ -213,7 +213,7 @@ def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True
         Forecast initialization month.
     day : int
         Forecast initialization day.
-    lead_time_weeks : list[int], optional
+    lead_times_weeks : list[int], optional
         Lead weeks to process, by default [1, 2, 3].
     delete_grib : bool, optional
         Whether to delete the GRIB and index files after processing.
@@ -239,8 +239,8 @@ def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True
     ds = ds*3600*168 #Convert to m/week from m/s
     ds = ds*1000 #Convert to mm/week from m/week
 
-    for i, week in enumerate(lead_time_weeks):
-        ds_week = ds.isel(step=i) #Select the correct step for this lead week. This assumes the steps are in the same order as the lead_time_weeks list, which should be true if the request is built correctly.
+    for i, week in enumerate(lead_times_weeks):
+        ds_week = ds.isel(step=i) #Select the correct step for this lead week. This assumes the steps are in the same order as the lead_times_weeks list, which should be true if the request is built correctly.
         ds_week_mean = ds_week.mean('number').rename({'tprate': 'tp_mean'}) #Renaming variable to avoid confusion with std
         ds_week_mean['tp_std'] = ds_week.std('number').tprate #Calculate std across ensemble members and add as new variable in same dataset
         ds_week_mean.attrs['units'] = 'mm/week'
@@ -255,7 +255,7 @@ def process_s2s_data(year, month, day, lead_time_weeks=[1,2,3], delete_grib=True
     if delete_grib:
         delete_grib_and_index(fname)
 
-def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_time_weeks=[1,2,3], delete_grib=True, RAW_FOLDER="./s2s_data", PROC_FOLDER="./s2s_data"):
+def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_times_weeks=[1,2,3], delete_grib=True, RAW_FOLDER="./s2s_data", PROC_FOLDER="./s2s_data"):
     """
     Download and/or process subseasonal-to-seasonal (S2S) forecast data for a given date.
 
@@ -274,7 +274,7 @@ def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_t
     data_source : str, optional
         Data source to use. Supported values are 'Oxford' and 'ECMWF'.
         Default is 'Oxford'.
-    lead_time_weeks : list[int], optional
+    lead_times_weeks : list[int], optional
         Lead weeks to download/process, for example [1, 2, 3].
     delete_grib : bool, optional
         Whether to delete the raw GRIB file after processing when using ECMWF data.
@@ -296,10 +296,10 @@ def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_t
     
     if data_source == 'Oxford':
         #Download proccsed data from Oxford S2S database
-        download_s2s_data_oxford(year, month, day, lead_time_weeks=lead_time_weeks, OUT_FOLDER=PROC_FOLDER)
+        download_s2s_data_oxford(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=PROC_FOLDER)
     elif data_source == 'ECMWF':
         #Download directly from ECMWF API and process
-        download_s2s_data_ecmwf(year, month, day, lead_time_weeks=lead_time_weeks, OUT_FOLDER=RAW_FOLDER)
-        process_s2s_data(year, month, day, lead_time_weeks=lead_time_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
+        download_s2s_data_ecmwf(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
+        process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
     else:
         raise ValueError(f"Invalid data source: {data_source}. Supported sources are 'Oxford' and 'ECMWF'.")

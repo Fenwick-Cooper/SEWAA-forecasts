@@ -6,8 +6,8 @@ import zipfile
 import shutil
 import os
 
-ZIP_PATH = Path("isodisreg-master.zip")
-TARGET_DIR = Path("isodisreg")
+ZIP_PATH = Path("./s2s_forecasts/isodisreg-master.zip")
+TARGET_DIR = Path("./isodisreg")
 
 def pip_install(*args, env=None):
     """
@@ -77,15 +77,17 @@ def ensure_packages(extra_packages=None):
     subprocess.CalledProcessError
         If package installation fails.
     """
-    if importlib.util.find_spec("isodisreg") is not None:
-        print("isodisreg is already available")
-        return
-
-    #Packages
+    print("Ensuring required packages")
+    #Extra specified packages
     ensure_package("geopandas")
+    ensure_package("regionmask")
     if extra_packages is not None:
         for pkg in extra_packages:
             ensure_package(pkg)
+
+    if importlib.util.find_spec("isodisreg") is not None:
+        print("isodisreg is already available")
+        return
 
     # ISODISREG
     ensure_package("pybind11")

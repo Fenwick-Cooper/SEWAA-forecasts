@@ -87,11 +87,11 @@ def parseArguments():
     run_s2s_forecast = False  # Default
     if (args.accumulation is not None):
         
-        if (args.accumulation == '6h') or (int(args.accumulation) == 6):
+        if (args.accumulation == '6h') or (args.accumulation == 6):
             accumulation_time = 6
-        elif (args.accumulation == '24h') or (int(args.accumulation) == 24):
+        elif (args.accumulation == '24h') or (args.accumulation == 24):
             accumulation_time = 24            
-        elif (args.accumulation == '7d') or (int(args.accumulation) == 7):
+        elif (args.accumulation == '7d') or (args.accumulation == 7):
             accumulation_time = 7
             run_s2s_forecast = True
             
@@ -219,338 +219,336 @@ def check_ELR_files(model_path, save_path, accumulation_time, countries,
 
 
 if __name__=='__main__':
-    
+
     # Parse arguments to this script
-    accumulation_time, run_s2s_forecast, year, month, day, hour, minute, delete_forecasts, run_ELR = parseArguments()
-    
-    print(f"Producing forecasts of {accumulation_time}h accumulations")
-    print(f"initialised on {year}-{month:02d}-{day:02d} at {hour:02d}{minute:02d}.")
-    
-    # What are the valid hours of the forecast
-    valid_hours_6h = [30, 36, 42, 48]
-    valid_hours_24h = [6, 30, 54, 78, 102, 126, 150]
-    
-    # Shorthand
-    date_str = f"{year}{month:02d}{day:02d}"
-    time_str = f"{hour:02d}{minute:02d}"
-    
+    accumulation_time, run_s2s_forecast, year, month, day, hour, minute, delete_forecasts, run_ELR = parseArguments()    
     # The SEWAA-forecasts directory
     root_dir = "."
-    
-    # Where IFS data for 6 hour accumulations will be stored
-    IFS_data_path_6h = f"{root_dir}/6h_accumulations/IFS_forecast_data"
-    
-    # Where IFS data for 24 hour accumulations will be stored
-    IFS_data_path_24h = f"{root_dir}/24h_accumulations/IFS_forecast_data"
-    
-    # Where cGAN 6h forecasts will be stored
-    cGAN_forecast_path_6h = f"{root_dir}/6h_accumulations/cGAN_forecasts"
-    
-    # Where cGAN 24h forecasts will be stored
-    cGAN_forecast_path_24h = f"{root_dir}/24h_accumulations/cGAN_forecasts"
-    
-    # Where the 6h cGAN model forecast script is located
-    cGAN_forecast_script_path_6h = f"{root_dir}/6h_accumulations/cGAN/dsrnngan"
-    
-    # Where the 6h cGAN model forecast script is located
-    cGAN_forecast_script_path_24h = f"{root_dir}/24h_accumulations/cGAN/dsrnngan"
+    # Shorthand time and date strings
+    date_str = f"{year}{month:02d}{day:02d}"
+    time_str = f"{hour:02d}{minute:02d}"
 
-    # Where the ELR model script is located
-    ELR_script_path = f"{root_dir}/ELR/"
-
-    # Where the ELR models are located
-    ELR_model_path = f"{root_dir}/ELR/models/"
-
-    # Where the ELR predictions are saved
-    ELR_predictions_path = f"{root_dir}/interface/ensemble_logistic_regression/ELR_predictions/"
-
-    # Countries for ELR
-    ELR_countries = ["Rwanda","Kenya","Ethiopia"]
-    ELR_country_admin_regions = {"Rwanda":"county","Kenya":"subcounty","Ethiopia":"subcounty"}
-    
-    # Where all of the cGAN histogram counts will be stored
-    cGAN_counts_path = f"{root_dir}/interface/view_forecasts/data"
-    
-    # Where the cGAN 6h histogram counts will be stored
-    cGAN_counts_path_6h = f"{cGAN_counts_path}/counts_6h"
-    
-    # Where the cGAN 24h histogram counts will be stored
-    cGAN_counts_path_24h = f"{cGAN_counts_path}/counts_24h"
-    
-    
-    # Download IFS data
-
-    file_name = f"IFS_{date_str}_{hour:02d}Z.nc"
-    
-    # Where to download the data to
-    if (accumulation_time == 6):
-        IFS_data_path = IFS_data_path_6h
-    elif (accumulation_time == 24):
-        IFS_data_path = IFS_data_path_24h
-    else:
-        # Error should have been caught before, but if it wasn't catch it now.
-        print("ERROR: Incorrect accumulation time.")
-        sys.exit()
-    
-    # Create the directory for the IFS downloads if it doesn't exist
-    pathlib.Path(IFS_data_path).mkdir(exist_ok=True)
-    
-    # Check to see if the file is here first
-    if os.path.isfile(f"{IFS_data_path}/{file_name}"):
-        print(f"{IFS_data_path}/{file_name} already exists.")
-    else:
+    if not run_s2s_forecast: #Do the cGAN forecasts
+        print(f"Producing forecasts of {accumulation_time}h accumulations")
+        print(f"initialised on {year}-{month:02d}-{day:02d} at {hour:02d}{minute:02d}.")
         
-        # XXX Replace the if with a list of servers (including ICPAC).
+        # What are the valid hours of the forecast
+        valid_hours_6h = [30, 36, 42, 48]
+        valid_hours_24h = [6, 30, 54, 78, 102, 126, 150]
         
-        # Used with curl
-        if (platform.system() == "Windows"):
-            oblivion = "nul"
+        # Where IFS data for 6 hour accumulations will be stored
+        IFS_data_path_6h = f"{root_dir}/6h_accumulations/IFS_forecast_data"
+        
+        # Where IFS data for 24 hour accumulations will be stored
+        IFS_data_path_24h = f"{root_dir}/24h_accumulations/IFS_forecast_data"
+        
+        # Where cGAN 6h forecasts will be stored
+        cGAN_forecast_path_6h = f"{root_dir}/6h_accumulations/cGAN_forecasts"
+        
+        # Where cGAN 24h forecasts will be stored
+        cGAN_forecast_path_24h = f"{root_dir}/24h_accumulations/cGAN_forecasts"
+        
+        # Where the 6h cGAN model forecast script is located
+        cGAN_forecast_script_path_6h = f"{root_dir}/6h_accumulations/cGAN/dsrnngan"
+        
+        # Where the 6h cGAN model forecast script is located
+        cGAN_forecast_script_path_24h = f"{root_dir}/24h_accumulations/cGAN/dsrnngan"
+
+        # Where the ELR model script is located
+        ELR_script_path = f"{root_dir}/ELR/"
+
+        # Where the ELR models are located
+        ELR_model_path = f"{root_dir}/ELR/models/"
+
+        # Where the ELR predictions are saved
+        ELR_predictions_path = f"{root_dir}/interface/ensemble_logistic_regression/ELR_predictions/"
+
+        # Countries for ELR
+        ELR_countries = ["Rwanda","Kenya","Ethiopia"]
+        ELR_country_admin_regions = {"Rwanda":"county","Kenya":"subcounty","Ethiopia":"subcounty"}
+        
+        # Where all of the cGAN histogram counts will be stored
+        cGAN_counts_path = f"{root_dir}/interface/view_forecasts/data"
+        
+        # Where the cGAN 6h histogram counts will be stored
+        cGAN_counts_path_6h = f"{cGAN_counts_path}/counts_6h"
+        
+        # Where the cGAN 24h histogram counts will be stored
+        cGAN_counts_path_24h = f"{cGAN_counts_path}/counts_24h"
+        
+        
+        # Download IFS data
+
+        file_name = f"IFS_{date_str}_{hour:02d}Z.nc"
+        
+        # Where to download the data to
+        if (accumulation_time == 6):
+            IFS_data_path = IFS_data_path_6h
+        elif (accumulation_time == 24):
+            IFS_data_path = IFS_data_path_24h
         else:
-            oblivion = "/dev/null"
+            # Error should have been caught before, but if it wasn't catch it now.
+            print("ERROR: Incorrect accumulation time.")
+            sys.exit()
         
-        # The server to download from
-        file_URL = f"https://rain.physics.ox.ac.uk/ICPAC/operational/{accumulation_time}h_accumulations/IFS_forecast_data/{year}/{file_name}"
+        # Create the directory for the IFS downloads if it doesn't exist
+        pathlib.Path(IFS_data_path).mkdir(exist_ok=True)
         
-        # Check to see if the file exists
-        print(f"Checking University of Oxford for {file_name}")
-        return_value = subprocess.run(["curl","-Isw","%{http_code}",file_URL,"-o",oblivion],
-                                      capture_output = True, text = True)
-        
-        if (return_value.stdout == "200"):  # The file is there to get
-        
-            # Get the file
-            print(f"Copying 6h accumulation data, {file_name}, from University of Oxford.")
-            print(f"to {IFS_data_path}/.")
-            subprocess.run(["curl",file_URL,"-o",f"{IFS_data_path}/{file_name}"])
-        
-        else:  # The file is not there for some reason
+        # Check to see if the file is here first
+        if os.path.isfile(f"{IFS_data_path}/{file_name}"):
+            print(f"{IFS_data_path}/{file_name} already exists.")
+        else:
             
-            print(f"Unable to copy {file_name} from {file_URL}. HTTP error {return_value.stdout}.")
+            # XXX Replace the if with a list of servers (including ICPAC).
             
-            # Try another server
-            file_URL = f"http://megacorr.dynu.net/ICPAC/SEWAA_forecasts/{accumulation_time}h_accumulations/IFS_forecast_data/{year}/{file_name}"
+            # Used with curl
+            if (platform.system() == "Windows"):
+                oblivion = "nul"
+            else:
+                oblivion = "/dev/null"
+            
+            # The server to download from
+            file_URL = f"https://rain.physics.ox.ac.uk/ICPAC/operational/{accumulation_time}h_accumulations/IFS_forecast_data/{year}/{file_name}"
             
             # Check to see if the file exists
-            print(f"Checking Fenwick's home for {file_name}")
+            print(f"Checking University of Oxford for {file_name}")
             return_value = subprocess.run(["curl","-Isw","%{http_code}",file_URL,"-o",oblivion],
-                                          capture_output = True, text = True)
+                                        capture_output = True, text = True)
             
             if (return_value.stdout == "200"):  # The file is there to get
-        
+            
                 # Get the file
-                print(f"Copying 6h accumulation data, {file_name}, from Fenwick's home.")
+                print(f"Copying 6h accumulation data, {file_name}, from University of Oxford.")
                 print(f"to {IFS_data_path}/.")
                 subprocess.run(["curl",file_URL,"-o",f"{IFS_data_path}/{file_name}"])
-                
-            else:
             
-                # Couldn't get the file at all
+            else:  # The file is not there for some reason
+                
                 print(f"Unable to copy {file_name} from {file_URL}. HTTP error {return_value.stdout}.")
-                sys.exit()
-    
-    
-    # Run cGAN on this data
-        
-    if (accumulation_time == 6):
-        
-        # Check to see if the counts are there first
-        correct_num_counts_files = check_counts_files(cGAN_counts_path_6h,
-                                                      date_str, hour, valid_hours_6h)
-        
-        
-        # If the counts files are there and delete_forecasts is true don't run the forecasts
-        if not (correct_num_counts_files and delete_forecasts):
-            
-            # Create the directory for the cGAN forecasts if it doesn't exist
-            pathlib.Path(cGAN_forecast_path_6h).mkdir(exist_ok=True)
-            
-            file_name = f"GAN_{date_str}_{hour:02d}Z.nc"
-            
-            # Check to see if the forecast is there first
-            if os.path.isfile(f"{cGAN_forecast_path_6h}/{file_name}"):
-                print(f"{cGAN_forecast_path_6h}/{file_name} already exists.")
-            
-            else:
-                print(f"Running 6h cGAN: forecast_date.py {date_str} {time_str}")
-                run_dir = cGAN_forecast_script_path_6h
-                subprocess.run(["python", "forecast_date.py", date_str, str(hour)], cwd=run_dir)
                 
-        else:
-            print("Counts and ELR files exist and delete_forecasts is True; no forecast required.")
-    
-    elif (accumulation_time == 24):
-        
-        # Check to see if the counts are there first
-        correct_num_counts_files = check_counts_files(cGAN_counts_path_24h,
-                                                      date_str, hour, valid_hours_24h)
-        
-        # Check to see if the ELR files are there first
-        correct_num_ELR_files = check_ELR_files(ELR_model_path, ELR_predictions_path, accumulation_time,
-                                               ELR_countries, ELR_country_admin_regions, date_str)
-        
-        # If the counts and ELR files are there and delete_forecasts is true don't run the forecasts
-        if not (correct_num_counts_files and correct_num_ELR_files and delete_forecasts):
+                # Try another server
+                file_URL = f"http://megacorr.dynu.net/ICPAC/SEWAA_forecasts/{accumulation_time}h_accumulations/IFS_forecast_data/{year}/{file_name}"
+                
+                # Check to see if the file exists
+                print(f"Checking Fenwick's home for {file_name}")
+                return_value = subprocess.run(["curl","-Isw","%{http_code}",file_URL,"-o",oblivion],
+                                            capture_output = True, text = True)
+                
+                if (return_value.stdout == "200"):  # The file is there to get
             
-            # Create the directory for the cGAN forecasts if it doesn't exist
-            pathlib.Path(cGAN_forecast_path_24h).mkdir(exist_ok=True)
+                    # Get the file
+                    print(f"Copying 6h accumulation data, {file_name}, from Fenwick's home.")
+                    print(f"to {IFS_data_path}/.")
+                    subprocess.run(["curl",file_URL,"-o",f"{IFS_data_path}/{file_name}"])
+                    
+                else:
+                
+                    # Couldn't get the file at all
+                    print(f"Unable to copy {file_name} from {file_URL}. HTTP error {return_value.stdout}.")
+                    sys.exit()
+        
+        
+        # Run cGAN on this data
             
-            # Perform a separate forecast for each lead time
-            for lead_time_idx in range(7):
+        if (accumulation_time == 6):
             
-                file_name = f"GAN_{date_str}_{hour:02d}Z_v{lead_time_idx}.nc"
+            # Check to see if the counts are there first
+            correct_num_counts_files = check_counts_files(cGAN_counts_path_6h,
+                                                        date_str, hour, valid_hours_6h)
+            
+            
+            # If the counts files are there and delete_forecasts is true don't run the forecasts
+            if not (correct_num_counts_files and delete_forecasts):
+                
+                # Create the directory for the cGAN forecasts if it doesn't exist
+                pathlib.Path(cGAN_forecast_path_6h).mkdir(exist_ok=True)
+                
+                file_name = f"GAN_{date_str}_{hour:02d}Z.nc"
                 
                 # Check to see if the forecast is there first
-                if os.path.isfile(f"{cGAN_forecast_path_24h}/{file_name}"):
-                    print(f"{cGAN_forecast_path_24h}/{file_name} already exists.")
+                if os.path.isfile(f"{cGAN_forecast_path_6h}/{file_name}"):
+                    print(f"{cGAN_forecast_path_6h}/{file_name} already exists.")
                 
                 else:
-                    print(f"Running 24h cGAN: forecast_date.py {lead_time_idx} {date_str}")
-                    run_dir = cGAN_forecast_script_path_24h
-                    subprocess.run(["python", "forecast_date.py", str(lead_time_idx), date_str], cwd=run_dir)
-
-        else:
-            print("Counts and ELR files exist and delete_forecasts is True; no forecast required.")
-
-    # Compute the histogram counts
-    
-    # Create the directory for the data if it doesn't exist
-    pathlib.Path(cGAN_counts_path).mkdir(exist_ok=True)
-    
-    if (accumulation_time == 6):
-
-        # Create the directory for the data if it doesn't exist
-        pathlib.Path(cGAN_counts_path_6h).mkdir(exist_ok=True)
-        
-        # Check to see if the counts are there first
-        correct_num_counts_files = check_counts_files(cGAN_counts_path_6h, date_str, hour, valid_hours_6h)
-        
-        # Check to see if the counts are there first
-#         num_files_exist = 0
-#         for i in [30,36,42,48]:
-#             file_name = f"counts_{date_str}_{hour:02d}_{i}h.nc"
-#             exists = os.path.isfile(f"{cGAN_counts_path_6h}/{year}/{file_name}")
-#             if (exists):
-#                 num_files_exist += 1
-#                 print(f"{cGAN_counts_path_6h}/{year}/{file_name} already exists.")
-#         
-#         # If a file isn't there
-#         if (num_files_exist < 4):
-        if not correct_num_counts_files:
-            print(f"Computing 6h histograms for {date_str} {time_str}.")
-            
-            # Create the directory for the year if it doesn't exist
-            pathlib.Path(f"{cGAN_counts_path_6h}/{year}").mkdir(exist_ok=True)
-            
-            run_dir = f"{root_dir}/6h_accumulations"
-            subprocess.run(["python", "forecast2histogram_lowRAM.py", date_str, str(hour)], cwd=run_dir)
-        
-        else:
-            print("Histogram counts files already exist.")
-        
-    elif (accumulation_time == 24):
-        
-        # Create the directory for the data if it doesn't exist
-        pathlib.Path(cGAN_counts_path_24h).mkdir(exist_ok=True)
-        
-        # Check to see if the counts are there first
-        correct_num_counts_files = check_counts_files(cGAN_counts_path_24h, date_str, hour, valid_hours_24h)
-        
-#         # Check to see if the counts are there first
-#         num_files_exist = 0
-#         for i in [6,30,54,78,102,126,150]:
-#             file_name = f"counts_{date_str}_{hour:02d}_{i}h.nc"
-#             exists = os.path.isfile(f"{cGAN_counts_path_24h}/{year}/{file_name}")
-#             if (exists):
-#                 num_files_exist += 1
-#                 print(f"{cGAN_counts_path_24h}/{year}/{file_name} already exists.")
-#         
-#         # If a file isn't there
-#         if (num_files_exist < 7):
-        if not correct_num_counts_files:
-            print(f"Computing 24h histograms for {date_str} {time_str}.")
-            
-            # Create the directory for the year if it doesn't exist
-            pathlib.Path(f"{cGAN_counts_path_24h}/{year}").mkdir(exist_ok=True)
-            
-            run_dir = f"{root_dir}/24h_accumulations"
-            subprocess.run(["python", f"forecast2histogram_7d_lowRAM.py", date_str, str(hour)], cwd=run_dir)
-        
-        else:
-            print("Histogram counts files already exist.")
-    
-    # Run ELR forecasts (only when time is 0)
-    if ((hour == 0) and (run_ELR)):
-                  
-        if (accumulation_time == 24):
-                                                          
-            # Check to see if the ELR files are there first
-            correct_num_ELR_files = check_ELR_files(ELR_model_path, ELR_predictions_path, accumulation_time,
-                                               ELR_countries, ELR_country_admin_regions, date_str)
-        
-            # If the relevant files are there and delete_forecasts is true don't run the ELR
-            if not correct_num_ELR_files:
-        
-                print("Running ELR 24h forecasts.")
-                run_dir=ELR_script_path
-                subprocess.run(["python", f"run_ELR.py", "--date", date_str, "--model", "GAN", 
-                                "--accumulation", "24h_accumulations"], cwd=run_dir)
-            
+                    print(f"Running 6h cGAN: forecast_date.py {date_str} {time_str}")
+                    run_dir = cGAN_forecast_script_path_6h
+                    subprocess.run(["python", "forecast_date.py", date_str, str(hour)], cwd=run_dir)
+                    
             else:
-                print("ELR files already exist.")
-                
-    else:
-        if (run_ELR):
-            print("Skipping ELR forecasts for time not equal to 00:00.")
-        else:
-            print("ELR forecasts disabled.");
-    
-    # Update .JSON files for the interface. Overwrite if files exist.
-    
-    if (accumulation_time == 6):
-    
-        # Histogram counts
-        print("Listing 6h counts for the interface.")
-        run_dir = "6h_accumulations"
-        subprocess.run(["python", f"find_available_dates.py"], cwd=run_dir)
-        
-    elif (accumulation_time == 24):
-    
-        # Histogram counts
-        print("Listing 24h counts for the interface.")
-        run_dir = "24h_accumulations"
-        subprocess.run(["python", f"find_available_dates.py"], cwd=run_dir)
-    
-    # ELR forecasts run only when time is 0
-    if ((hour == 0) and (run_ELR)):
-        print("Listing ELR available dates.")
-        run_dir = "ELR"
-        subprocess.run(["python", f"ELR_available_dates.py"], cwd=run_dir)
-    
-    # Delete the cGAN forecast
-    if delete_forecasts:
-    
-        if (accumulation_time == 6):
-            file_to_delete = f"{cGAN_forecast_path_6h}/GAN_{date_str}_{hour:02d}Z.nc"
-            if os.path.isfile(file_to_delete):  # Check to see if the forecast is there first
-                print(f"Deleting {file_to_delete}")
-                subprocess.run(["rm", file_to_delete])
+                print("Counts and ELR files exist and delete_forecasts is True; no forecast required.")
         
         elif (accumulation_time == 24):
-            for lead_time_idx in range(7):
-                file_to_delete = f"{cGAN_forecast_path_24h}/GAN_{date_str}_{hour:02d}Z_v{lead_time_idx}.nc"
+            
+            # Check to see if the counts are there first
+            correct_num_counts_files = check_counts_files(cGAN_counts_path_24h,
+                                                        date_str, hour, valid_hours_24h)
+            
+            # Check to see if the ELR files are there first
+            correct_num_ELR_files = check_ELR_files(ELR_model_path, ELR_predictions_path, accumulation_time,
+                                                ELR_countries, ELR_country_admin_regions, date_str)
+            
+            # If the counts and ELR files are there and delete_forecasts is true don't run the forecasts
+            if not (correct_num_counts_files and correct_num_ELR_files and delete_forecasts):
+                
+                # Create the directory for the cGAN forecasts if it doesn't exist
+                pathlib.Path(cGAN_forecast_path_24h).mkdir(exist_ok=True)
+                
+                # Perform a separate forecast for each lead time
+                for lead_time_idx in range(7):
+                
+                    file_name = f"GAN_{date_str}_{hour:02d}Z_v{lead_time_idx}.nc"
+                    
+                    # Check to see if the forecast is there first
+                    if os.path.isfile(f"{cGAN_forecast_path_24h}/{file_name}"):
+                        print(f"{cGAN_forecast_path_24h}/{file_name} already exists.")
+                    
+                    else:
+                        print(f"Running 24h cGAN: forecast_date.py {lead_time_idx} {date_str}")
+                        run_dir = cGAN_forecast_script_path_24h
+                        subprocess.run(["python", "forecast_date.py", str(lead_time_idx), date_str], cwd=run_dir)
+
+            else:
+                print("Counts and ELR files exist and delete_forecasts is True; no forecast required.")
+
+        # Compute the histogram counts
+        
+        # Create the directory for the data if it doesn't exist
+        pathlib.Path(cGAN_counts_path).mkdir(exist_ok=True)
+        
+        if (accumulation_time == 6):
+
+            # Create the directory for the data if it doesn't exist
+            pathlib.Path(cGAN_counts_path_6h).mkdir(exist_ok=True)
+            
+            # Check to see if the counts are there first
+            correct_num_counts_files = check_counts_files(cGAN_counts_path_6h, date_str, hour, valid_hours_6h)
+            
+            # Check to see if the counts are there first
+    #         num_files_exist = 0
+    #         for i in [30,36,42,48]:
+    #             file_name = f"counts_{date_str}_{hour:02d}_{i}h.nc"
+    #             exists = os.path.isfile(f"{cGAN_counts_path_6h}/{year}/{file_name}")
+    #             if (exists):
+    #                 num_files_exist += 1
+    #                 print(f"{cGAN_counts_path_6h}/{year}/{file_name} already exists.")
+    #         
+    #         # If a file isn't there
+    #         if (num_files_exist < 4):
+            if not correct_num_counts_files:
+                print(f"Computing 6h histograms for {date_str} {time_str}.")
+                
+                # Create the directory for the year if it doesn't exist
+                pathlib.Path(f"{cGAN_counts_path_6h}/{year}").mkdir(exist_ok=True)
+                
+                run_dir = f"{root_dir}/6h_accumulations"
+                subprocess.run(["python", "forecast2histogram_lowRAM.py", date_str, str(hour)], cwd=run_dir)
+            
+            else:
+                print("Histogram counts files already exist.")
+            
+        elif (accumulation_time == 24):
+            
+            # Create the directory for the data if it doesn't exist
+            pathlib.Path(cGAN_counts_path_24h).mkdir(exist_ok=True)
+            
+            # Check to see if the counts are there first
+            correct_num_counts_files = check_counts_files(cGAN_counts_path_24h, date_str, hour, valid_hours_24h)
+            
+    #         # Check to see if the counts are there first
+    #         num_files_exist = 0
+    #         for i in [6,30,54,78,102,126,150]:
+    #             file_name = f"counts_{date_str}_{hour:02d}_{i}h.nc"
+    #             exists = os.path.isfile(f"{cGAN_counts_path_24h}/{year}/{file_name}")
+    #             if (exists):
+    #                 num_files_exist += 1
+    #                 print(f"{cGAN_counts_path_24h}/{year}/{file_name} already exists.")
+    #         
+    #         # If a file isn't there
+    #         if (num_files_exist < 7):
+            if not correct_num_counts_files:
+                print(f"Computing 24h histograms for {date_str} {time_str}.")
+                
+                # Create the directory for the year if it doesn't exist
+                pathlib.Path(f"{cGAN_counts_path_24h}/{year}").mkdir(exist_ok=True)
+                
+                run_dir = f"{root_dir}/24h_accumulations"
+                subprocess.run(["python", f"forecast2histogram_7d_lowRAM.py", date_str, str(hour)], cwd=run_dir)
+            
+            else:
+                print("Histogram counts files already exist.")
+        
+        # Run ELR forecasts (only when time is 0)
+        if ((hour == 0) and (run_ELR)):
+                    
+            if (accumulation_time == 24):
+                                                            
+                # Check to see if the ELR files are there first
+                correct_num_ELR_files = check_ELR_files(ELR_model_path, ELR_predictions_path, accumulation_time,
+                                                ELR_countries, ELR_country_admin_regions, date_str)
+            
+                # If the relevant files are there and delete_forecasts is true don't run the ELR
+                if not correct_num_ELR_files:
+            
+                    print("Running ELR 24h forecasts.")
+                    run_dir=ELR_script_path
+                    subprocess.run(["python", f"run_ELR.py", "--date", date_str, "--model", "GAN", 
+                                    "--accumulation", "24h_accumulations"], cwd=run_dir)
+                
+                else:
+                    print("ELR files already exist.")
+                    
+        else:
+            if (run_ELR):
+                print("Skipping ELR forecasts for time not equal to 00:00.")
+            else:
+                print("ELR forecasts disabled.");
+        
+        # Update .JSON files for the interface. Overwrite if files exist.
+        
+        if (accumulation_time == 6):
+        
+            # Histogram counts
+            print("Listing 6h counts for the interface.")
+            run_dir = "6h_accumulations"
+            subprocess.run(["python", f"find_available_dates.py"], cwd=run_dir)
+            
+        elif (accumulation_time == 24):
+        
+            # Histogram counts
+            print("Listing 24h counts for the interface.")
+            run_dir = "24h_accumulations"
+            subprocess.run(["python", f"find_available_dates.py"], cwd=run_dir)
+        
+        # ELR forecasts run only when time is 0
+        if ((hour == 0) and (run_ELR)):
+            print("Listing ELR available dates.")
+            run_dir = "ELR"
+            subprocess.run(["python", f"ELR_available_dates.py"], cwd=run_dir)
+        
+        # Delete the cGAN forecast
+        if delete_forecasts:
+        
+            if (accumulation_time == 6):
+                file_to_delete = f"{cGAN_forecast_path_6h}/GAN_{date_str}_{hour:02d}Z.nc"
                 if os.path.isfile(file_to_delete):  # Check to see if the forecast is there first
                     print(f"Deleting {file_to_delete}")
                     subprocess.run(["rm", file_to_delete])
-    
+            
+            elif (accumulation_time == 24):
+                for lead_time_idx in range(7):
+                    file_to_delete = f"{cGAN_forecast_path_24h}/GAN_{date_str}_{hour:02d}Z_v{lead_time_idx}.nc"
+                    if os.path.isfile(file_to_delete):  # Check to see if the forecast is there first
+                        print(f"Deleting {file_to_delete}")
+                        subprocess.run(["rm", file_to_delete])
     
     if run_s2s_forecast:
         # Run the S2S forecast
         print("Running the S2S forecast.")
         run_dir = f"{root_dir}/s2s_forecasts"
         if delete_forecasts:
-            subprocess.run(["python", "run_s2s_forecast.py", "--date", date_str, "--delete_forecasts", "Y"])
+            subprocess.run(["python", "s2s_forecasts/run_s2s_forecast.py", "--date", date_str, "--delete_forecasts", "Y"])
         else:
-            subprocess.run(["python", "run_s2s_forecast.py", "--date", date_str])
+            subprocess.run(["python", "s2s_forecasts/run_s2s_forecast.py", "--date", date_str])
 
     # Show that we are done (and haven't crashed)
     print("Script run_forecast.py is done!")

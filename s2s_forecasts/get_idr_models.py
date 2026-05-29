@@ -1,8 +1,8 @@
 from pathlib import Path
-import platform
 import subprocess
 import zipfile
 import shutil
+import requests
 
 
 def idr_models_available(OUT_FOLDER="./idr_models", required_files=None):
@@ -48,43 +48,46 @@ def download_idr_models_oxford(OUT_FOLDER="./idr_models"):
     -------
     None
     """
-    server = "https://rain.physics.ox.ac.uk/ICPAC/operational/s2s_forecasts/zipped_files"
+    server = "https://rain.physics.ox.ac.uk/ICPAC/operational/s2s_forecasts/zipped_files/idr_models.zip"
 
     out_dir = Path(OUT_FOLDER)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Used with curl
-    if platform.system() == "Windows":
-        oblivion = "nul"
-    else:
-        oblivion = "/dev/null"
-
-    # If the models are already there, do nothing
-    if idr_models_available(OUT_FOLDER=OUT_FOLDER):
-        print(f"Model files already found in {OUT_FOLDER}. Nothing to download.")
+    if idr_models_available(OUT_FOLDER=out_dir):
+        print(f"Model files already found in {out_dir}. Nothing to download.")
         return
 
-    zip_name = "idr_models.zip"
-    zip_path = out_dir / zip_name
+    zip_path = out_dir / "idr_models.zip"
 
-    print("Checking University of Oxford for idr_models zip")
-    return_value = subprocess.run(
-        ["curl", "-Isw", "%{http_code}", server, "-o", oblivion],
-        capture_output=True,
-        text=True
-    )
+    print(f"Downloading {server} ...")
+    try:
+        with requests.get(server, stream=True, timeout=120) as r:
+            r.raise_for_status()
 
-    if return_value.stdout == "200":
-        print(f"Copying idr_models zip from University of Oxford to {zip_path}.")
-        subprocess.run(["curl", "-L", server, "-o", str(zip_path)], check=True)
+            content_type = r.headers.get("Content-Type", "")
+            if "zip" not in content_type.lower() and not server.endswith(".zip"):
+                print(f"Unexpected content type: {content_type}")
+                return
 
-        print(f"Unzipping {zip_path} to {OUT_FOLDER}/.")
+            with open(zip_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        f.write(chunk)
+
+    except requests.RequestException as e:
+        print(f"Download failed: {e}")
+        return
+
+    try:
         with zipfile.ZipFile(zip_path, "r") as zf:
+            print("Archive contents:")
+            print(zf.namelist())
             zf.extractall(out_dir)
-
-        # Remove the zip after extraction
+    except zipfile.BadZipFile:
+        print("Downloaded file is not a valid zip archive.")
+        return
+    finally:
+        print(zip_path)
         zip_path.unlink(missing_ok=True)
 
-        print("Done.")
-    else:
-        print(f"Unable to copy idr_models zip from {server}. HTTP error {return_value.stdout}.")
+    print("Done.")

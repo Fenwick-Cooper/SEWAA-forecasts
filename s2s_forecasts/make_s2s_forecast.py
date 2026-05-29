@@ -30,6 +30,10 @@ def load_idr_models(path: Path):
     FileNotFoundError
         If the file does not exist or cannot be loaded.
     """
+    #Make Path instance if needed
+    if not isinstance(path, Path):
+        path = Path(path)
+        
     download_idr_models_oxford(OUT_FOLDER=path.parent)
 
     artifact = joblib.load(path)

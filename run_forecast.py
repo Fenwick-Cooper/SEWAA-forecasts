@@ -29,6 +29,12 @@
 # Run todays 6h forecasts initialised at 0000 and delete the forecasts once
 # statistics have been computed
 #    python run_forecast.py --delete_forecasts Y
+#
+# Run todays 7d forecasts
+#    python run_forecast.py --accumulation 7d
+
+# Run todays 7d forecasts and delete the forecasts once statistics have been computed
+#   python run_forecast.py --accumulation 7d --delete_forecasts Y
 
 import argparse
 import sys
@@ -70,7 +76,7 @@ def parseArguments():
  statistics have been computed
     python run_forecast.py --delete_forecasts Y  
     """, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--accumulation', help='How long rainfall is accumulated for, either 6h or 24h',default=None,type=str)
+    parser.add_argument('--accumulation', help='How long rainfall is accumulated for, either 6h, 24h or 7d',default=None,type=str)
     parser.add_argument('--date', help='Forecast initialisation date (YYYYMMDD)',default=None,type=str)
     parser.add_argument('--time', help='Forecast initialisation time (HHMM)',default=None,type=str)    
     parser.add_argument('--delete_forecasts', help='Should forecasts be deleted or not (Y/N)',default=None,type=str)
@@ -78,17 +84,20 @@ def parseArguments():
     args = parser.parse_args()
     
     # Parse the accumulation
+    run_s2s_forecast = False  # Default
     if (args.accumulation is not None):
         
         if (args.accumulation == '6h') or (int(args.accumulation) == 6):
             accumulation_time = 6
-            
         elif (args.accumulation == '24h') or (int(args.accumulation) == 24):
-            accumulation_time = 24
+            accumulation_time = 24            
+        elif (args.accumulation == '7d') or (int(args.accumulation) == 7):
+            accumulation_time = 7
+            run_s2s_forecast = True
             
         else:
             print("ERROR: Incorrect accumulation.")
-            print("       Available accumulations 6h, 24h.")
+            print("       Available accumulations 6h, 24h, 7d.")
             parser.print_help()
             sys.exit()
         
@@ -161,7 +170,7 @@ def parseArguments():
     if (args.disable_ELR is not None):
         run_ELR = False
     
-    return accumulation_time, year, month, day, hour, minute, delete_forecasts, run_ELR
+    return accumulation_time, run_s2s_forecast, year, month, day, hour, minute, delete_forecasts, run_ELR
 
 
 # Checks that all of the histogram counts files for this date and time are there or not.
@@ -212,7 +221,7 @@ def check_ELR_files(model_path, save_path, accumulation_time, countries,
 if __name__=='__main__':
     
     # Parse arguments to this script
-    accumulation_time, year, month, day, hour, minute, delete_forecasts, run_ELR = parseArguments()
+    accumulation_time, run_s2s_forecast, year, month, day, hour, minute, delete_forecasts, run_ELR = parseArguments()
     
     print(f"Producing forecasts of {accumulation_time}h accumulations")
     print(f"initialised on {year}-{month:02d}-{day:02d} at {hour:02d}{minute:02d}.")
@@ -534,5 +543,14 @@ if __name__=='__main__':
                     subprocess.run(["rm", file_to_delete])
     
     
+    if run_s2s_forecast:
+        # Run the S2S forecast
+        print("Running the S2S forecast.")
+        run_dir = f"{root_dir}/s2s_forecasts"
+        if delete_forecasts:
+            subprocess.run(["python", "run_s2s_forecast.py", "--date", date_str, "--delete_forecasts", "Y"])
+        else:
+            subprocess.run(["python", "run_s2s_forecast.py", "--date", date_str])
+
     # Show that we are done (and haven't crashed)
     print("Script run_forecast.py is done!")

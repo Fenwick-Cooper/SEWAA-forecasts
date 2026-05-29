@@ -33,6 +33,10 @@ IFS_wait_minutes_for_6h_accumulations = 30
 IFS_wait_hours_for_24h_accumulations = 9
 IFS_wait_minutes_for_24h_accumulations = 30
 
+#Not sure on these values -- guessed for now
+IFS_wait_hours_for_7d_accumulations = 12
+IFS_wait_minutes_for_7d_accumulations = 30
+
 
 # 6h accumulations
 def run_6h_accumulation_forecasts():
@@ -92,9 +96,38 @@ def run_24h_accumulation_forecasts():
         d += timedelta(days=1)
 
 
+# 7d accumulations
+def run_7d_accumulation_forecasts():
+
+    # Time of most recent forecast to check for
+    d_end = datetime.utcnow() - (timedelta(hours = IFS_wait_hours_for_7d_accumulations) +
+                                 timedelta(minutes = IFS_wait_minutes_for_7d_accumulations))
+    
+    # Time of first forecast to check for
+    d_start = d_end - timedelta(days = days_to_check)
+    
+    # Always start at 00:00
+    d_start = datetime(d_start.year, d_start.month, d_start.day)
+    
+    # Run all 7d forecasts days_to_check days in the past
+    d = d_start
+    while (d < d_end):
+        
+        # Check for the 7d forecast
+        print(f"Running: run_forecast.py --accumulation 7d --date {d.year}{d.month:02d}{d.day:02d} --delete_forecasts Y")
+        subprocess.call(["python", f"run_forecast.py",
+                         "--accumulation", "7d",
+                         "--date", f"{d.year}{d.month:02d}{d.day:02d}",
+                         "--delete_forecasts", "Y"])
+        
+        # Move to the next forecast
+        d += timedelta(days=1)
+
+
 def run_all_forecasts():
     run_6h_accumulation_forecasts()
     run_24h_accumulation_forecasts()
+    run_7d_accumulation_forecasts()
 
 
 if __name__=='__main__':

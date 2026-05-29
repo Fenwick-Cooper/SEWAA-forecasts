@@ -38,6 +38,7 @@ A conda environment is required, to set this up run the following commands:
 	pip install flake8
 	pip install regionmask
 	pip install schedule
+	pip install geopandas
 	conda install conda-forge::curl
 
 Check that tensor flow is working

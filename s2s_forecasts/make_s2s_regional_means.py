@@ -126,7 +126,7 @@ def mean_within_polygons(
     return xr.concat(out, dim="region")
 
 
-def make_regional_means(year, month, day, lead_time_weeks=[1,2,3], IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data/regional_means", SHAPEFILE_FOLDER="./shapefiles", shapefile_name="admin1_merged_KeEtRwUg.gpkg", region_subset=None):
+def make_regional_means(year, month, day, lead_times_weeks=[1,2,3], IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data/regional_means", SHAPEFILE_FOLDER="./shapefiles", shapefile_name="admin1_merged_KeEtRwUg.gpkg", region_subset=None):
     """
     Generate and save regional-mean forecast NetCDF files for one or more lead
     times.
@@ -139,7 +139,7 @@ def make_regional_means(year, month, day, lead_time_weeks=[1,2,3], IN_FOLDER="./
     ----------
     year, month, day : int
         Forecast initialization date.
-    lead_time_weeks : list of int, optional
+    lead_times_weeks : list of int, optional
         Lead times to process.
     IN_FOLDER : str, optional
         Directory containing the input gridded forecast NetCDF files.
@@ -160,7 +160,7 @@ def make_regional_means(year, month, day, lead_time_weeks=[1,2,3], IN_FOLDER="./
     gdf = load_shapefile(os.path.join(SHAPEFILE_FOLDER, shapefile_name), subset=region_subset)
 
     #Iterate through lead times, opening file and calculating regional means for each
-    for week in lead_time_weeks:
+    for week in lead_times_weeks:
         fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc")
         try:
             print(f"Processing file: {fname}")

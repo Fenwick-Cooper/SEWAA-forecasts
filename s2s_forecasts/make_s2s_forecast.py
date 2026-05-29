@@ -45,7 +45,7 @@ def load_idr_models(path: Path):
 
     return models, artifact
 
-def load_ifs_onelead_regional_mean(year, month, day, lead_time_weeks=1, IN_FOLDER="./s2s_data/regional_means", shapefile_name="admin1_merged_KeEtRwUg.gpkg"):
+def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLDER="./s2s_data/regional_means", shapefile_name="admin1_merged_KeEtRwUg.gpkg"):
     """
     Load precomputed IFS regional-mean forecast data for a given initialization
     date and lead time.
@@ -54,7 +54,7 @@ def load_ifs_onelead_regional_mean(year, month, day, lead_time_weeks=1, IN_FOLDE
     ----------
     year, month, day : int
         Forecast initialization date.
-    lead_time_weeks : int, optional
+    lead_times_weeks : int, optional
         Lead time in weeks. Default is 1.
     IN_FOLDER : str, optional
         Directory containing the regional-mean NetCDF files.
@@ -72,7 +72,7 @@ def load_ifs_onelead_regional_mean(year, month, day, lead_time_weeks=1, IN_FOLDE
     FileNotFoundError
         If the expected NetCDF file is missing.
     """
-    fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{lead_time_weeks}wklead_{shapefile_name.split('.')[0]}.nc")
+    fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{lead_times_weeks}wklead_{shapefile_name.split('.')[0]}.nc")
 
     try:
         ds = xr.open_dataset(fname)
@@ -314,7 +314,7 @@ def produce_s2s_idr_forecasts(
     year,
     month,
     day,
-    lead_time_weeks=[1, 2, 3],
+    lead_times_weeks=[1, 2, 3],
     bins="default",
     IDR_MODEL_FOLDER="./idr_models",
     shapefile_name="admin1_merged_KeEtRwUg.gpkg",
@@ -332,7 +332,7 @@ def produce_s2s_idr_forecasts(
     ----------
     year, month, day : int
         Forecast initialization date.
-    lead_time_weeks : list of int, optional
+    lead_times_weeks : list of int, optional
         Lead times to process.
     bins : str or sequence, optional
         Histogram bin specification. If ``"default"``, use the built-in weekly
@@ -351,11 +351,11 @@ def produce_s2s_idr_forecasts(
     None
     """
 
-    print(f"Producing S2S IDR forecasts for {year}-{month:02d}-{day:02d} with lead times {lead_time_weeks} weeks...")
+    print(f"Producing S2S IDR forecasts for {year}-{month:02d}-{day:02d} with lead times {lead_times_weeks} weeks...")
     print("Using shapefile:", shapefile_name)
     
     #Iterate through lead times, loading models and data, generating predictions, and saving outputs
-    for lead in lead_time_weeks:
+    for lead in lead_times_weeks:
         print(f"Processing lead time {lead} weeks...")
         idr_models_name = f'idr_models_{shapefile_name.split(".")[0]}_{lead}wklead.joblib'
 
@@ -363,7 +363,7 @@ def produce_s2s_idr_forecasts(
         print(f"Processing forecast for {year}-{month:02d}-{day:02d} with lead time {lead} weeks...")
         models, _ = load_idr_models(os.path.join(IDR_MODEL_FOLDER, idr_models_name))
         print(f"Loaded IDR models for lead time {lead} weeks.")
-        data = load_ifs_onelead_regional_mean(year, month, day, lead_time_weeks=lead, IN_FOLDER=REGIONAL_MEAN_FOLDER, shapefile_name=shapefile_name)
+        data = load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=lead, IN_FOLDER=REGIONAL_MEAN_FOLDER, shapefile_name=shapefile_name)
         print(f"Loaded IFS regional mean data for lead time {lead} weeks.")
         
         #Run prediction

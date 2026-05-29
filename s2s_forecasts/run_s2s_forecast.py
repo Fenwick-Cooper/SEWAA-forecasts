@@ -1,18 +1,13 @@
 #imports
 import argparse
 from datetime import datetime
-
 from ensure_required_packages import ensure_packages
-from download_s2s_data import download_and_process_s2s_data
-from make_s2s_regional_means import make_regional_means
-from make_s2s_forecast import produce_s2s_idr_forecasts
-from delete_s2s_forecasts import delete_forecast_files
 
-#Define directories
-RAW_S2S_DATA_DIR = "./s2s_data/raw"
-PROC_S2S_DATA_DIR = "./s2s_data/processed"
-REG_MEAN_DATA_DIR = "./s2s_data/regional_means"
-SHAPEFILE_DIR = "./shapefiles"
+#Define directories -- defaults here will save in the s2s_forecasts directory
+RAW_S2S_DATA_DIR = "./s2s_forecasts/s2s_data/raw"
+PROC_S2S_DATA_DIR = "./s2s_forecasts/s2s_data/processed"
+REG_MEAN_DATA_DIR = "./s2s_forecasts/s2s_data/regional_means"
+SHAPEFILE_DIR = "./s2s_forecasts/shapefiles"
 FCST_OUT_DIR = "../interface/view_forecasts/data/counts_s2s"
 # FCST_OUT_DIR = "/nf2/web/rain/ICPAC/operational/s2s_forecasts/s2s_counts" #FOR OXFORD USE
 
@@ -20,6 +15,7 @@ FCST_OUT_DIR = "../interface/view_forecasts/data/counts_s2s"
 #Global settings
 lead_times_weeks = [1,2,3]
 data_source = 'Oxford'
+data_source = 'ECMWF' #FOR OXFORD USE
 SHAPEFILE_NAME = "admin1_merged_KeEtRwUg.gpkg"
 
 def parse_args():
@@ -55,6 +51,11 @@ def main():
     #Check package requirements
     ensure_packages()
 
+    from download_s2s_data import download_and_process_s2s_data
+    from make_s2s_regional_means import make_regional_means
+    from make_s2s_forecast import produce_s2s_idr_forecasts
+    from delete_s2s_forecasts import delete_forecast_files
+
     #Run download script to get S2S data for this date
     download_and_process_s2s_data(
         year,
@@ -74,7 +75,7 @@ def main():
         day,
         lead_times_weeks=lead_times_weeks,
         IN_FOLDER=PROC_S2S_DATA_DIR,
-        OUT_FOLDER=PROC_S2S_DATA_DIR,
+        OUT_FOLDER=REG_MEAN_DATA_DIR,
         SHAPEFILE_FOLDER=SHAPEFILE_DIR,
         shapefile_name=SHAPEFILE_NAME,
         region_subset=None
@@ -87,7 +88,7 @@ def main():
         day,
         lead_times_weeks=lead_times_weeks,
         bins='default',
-        IDR_MODEL_FOLDER='./idr_models',
+        IDR_MODEL_FOLDER='./s2s_forecasts/idr_models',
         shapefile_name=SHAPEFILE_NAME,
         REGIONAL_MEAN_FOLDER=REG_MEAN_DATA_DIR,
         OUT_FOLDER=FCST_OUT_DIR

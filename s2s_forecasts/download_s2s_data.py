@@ -1,6 +1,7 @@
 from asyncio import subprocess
-from platform import platform
+import platform
 import subprocess
+import requests
 
 import numpy as np
 from ecmwfapi import ECMWFService
@@ -168,33 +169,33 @@ def download_s2s_data_oxford(year, month, day, lead_times_weeks=[1,2,3], OUT_FOL
     None
     """
     server = "https://rain.physics.ox.ac.uk/ICPAC/operational/s2s_forecasts/s2s_forecast_data"
-    # Used with curl
-    if (platform.system() == "Windows"):
-        oblivion = "nul"
-    else:
-        oblivion = "/dev/null"
+    
+    os.makedirs(OUT_FOLDER, exist_ok=True)
 
     for week in lead_times_weeks:
-        fname =f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc"
-
-        # The server to download from
+        fname = f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc"
         file_URL = f"{server}/{year}/{fname}"
 
-        # Check to see if the file exists
         print(f"Checking University of Oxford for {fname}")
-        return_value = subprocess.run(["curl","-Isw","%{http_code}",file_URL,"-o",oblivion],
-                                    capture_output = True, text = True)
-
-        if (return_value.stdout == "200"):  # The file is there to get
-
-            # Get the file
+        try:
+            r = requests.head(file_URL, allow_redirects=True, timeout=30)
+        except requests.RequestException as e:
+            print(f"Unable to check {file_URL}: {e}")
+            continue
+        
+        
+        if r.status_code == 200:
             print(f"Copying S2S data, lead time {week} weeks, {fname}, from University of Oxford.")
             print(f"to {OUT_FOLDER}/.")
-            subprocess.run(["curl",file_URL,"-o",f"{OUT_FOLDER}/{fname}"])
-
-        else:  # The file is not there for some reason
-
-            print(f"Unable to copy {fname} from {file_URL}. HTTP error {return_value.stdout}.")
+            try:
+                r = requests.get(file_URL, timeout=60)
+                r.raise_for_status()
+                with open(os.path.join(OUT_FOLDER, fname), "wb") as f:
+                    f.write(r.content)
+            except requests.RequestException as e:
+                print(f"Unable to download {fname}: {e}")
+        else:
+            print(f"Unable to copy {fname} from {file_URL}. HTTP error {r.status_code}. Make sure the data is available")
 
 
 def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=True, IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data"):

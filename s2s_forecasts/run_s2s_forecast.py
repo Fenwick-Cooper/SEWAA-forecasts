@@ -8,14 +8,14 @@ RAW_S2S_DATA_DIR = "./s2s_forecasts/s2s_data/raw"
 PROC_S2S_DATA_DIR = "./s2s_forecasts/s2s_data/processed"
 REG_MEAN_DATA_DIR = "./s2s_forecasts/s2s_data/regional_means"
 SHAPEFILE_DIR = "./s2s_forecasts/shapefiles"
-FCST_OUT_DIR = "../interface/view_forecasts/data/counts_s2s"
+FCST_OUT_DIR = "./interface/view_forecasts/data/counts_s2s"
 # FCST_OUT_DIR = "/nf2/web/rain/ICPAC/operational/s2s_forecasts/s2s_counts" #FOR OXFORD USE
 
 
 #Global settings
 lead_times_weeks = [1,2,3]
 data_source = 'Oxford'
-data_source = 'ECMWF' #FOR OXFORD USE
+# data_source = 'ECMWF' #FOR OXFORD USE
 SHAPEFILE_NAME = "admin1_merged_KeEtRwUg.gpkg"
 
 def parse_args():

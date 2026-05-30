@@ -49,7 +49,7 @@ def load_idr_models(path: Path):
 
     return models, artifact
 
-def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLDER="./s2s_data/regional_means", shapefile_name="admin1_merged_KeEtRwUg.gpkg"):
+def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLDER="./s2s_data/regional_means", regionmask_name="admin1_merged_KeEtRwUg.gpkg"):
     """
     Load precomputed IFS regional-mean forecast data for a given initialization
     date and lead time.
@@ -62,7 +62,7 @@ def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLD
         Lead time in weeks. Default is 1.
     IN_FOLDER : str, optional
         Directory containing the regional-mean NetCDF files.
-    shapefile_name : str, optional
+    regionmask_name : str, optional
         Shapefile name used when creating the regional-mean file. The base name
         is used to construct the NetCDF filename.
 
@@ -76,7 +76,7 @@ def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLD
     FileNotFoundError
         If the expected NetCDF file is missing.
     """
-    fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{lead_times_weeks}wklead_{shapefile_name.split('.')[0]}.nc")
+    fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{lead_times_weeks}wklead_{regionmask_name.split('.')[0]}.nc")
 
     try:
         ds = xr.open_dataset(fname)
@@ -321,7 +321,7 @@ def produce_s2s_idr_forecasts(
     lead_times_weeks=[1, 2, 3],
     bins="default",
     IDR_MODEL_FOLDER="./idr_models",
-    shapefile_name="admin1_merged_KeEtRwUg.gpkg",
+    regionmask_name="admin1_merged_KeEtRwUg.gpkg",
     REGIONAL_MEAN_FOLDER="./s2s_data/regional_means",
     OUT_FOLDER="../interface/view_forecasts/data/counts_s2s",
 ):
@@ -343,7 +343,7 @@ def produce_s2s_idr_forecasts(
         bin set derived from Fenwick's 6-hourly bins.
     IDR_MODEL_FOLDER : str, optional
         Directory containing serialized IDR model artifacts.
-    shapefile_name : str, optional
+    regionmask_name : str, optional
         Shapefile name used when building the region labels.
     REGIONAL_MEAN_FOLDER : str, optional
         Directory containing regional-mean forecast NetCDF files.
@@ -356,18 +356,18 @@ def produce_s2s_idr_forecasts(
     """
 
     print(f"Producing S2S IDR forecasts for {year}-{month:02d}-{day:02d} with lead times {lead_times_weeks} weeks...")
-    print("Using shapefile:", shapefile_name)
+    print("Using shapefile:", regionmask_name)
     
     #Iterate through lead times, loading models and data, generating predictions, and saving outputs
     for lead in lead_times_weeks:
         print(f"Processing lead time {lead} weeks...")
-        idr_models_name = f'idr_models_{shapefile_name.split(".")[0]}_{lead}wklead.joblib'
+        idr_models_name = f'idr_models_{regionmask_name.split(".")[0]}_{lead}wklead.joblib'
 
         #Load IDR model and regional mean data for this date and lead time
         print(f"Processing forecast for {year}-{month:02d}-{day:02d} with lead time {lead} weeks...")
         models, _ = load_idr_models(os.path.join(IDR_MODEL_FOLDER, idr_models_name))
         print(f"Loaded IDR models for lead time {lead} weeks.")
-        data = load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=lead, IN_FOLDER=REGIONAL_MEAN_FOLDER, shapefile_name=shapefile_name)
+        data = load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=lead, IN_FOLDER=REGIONAL_MEAN_FOLDER, regionmask_name=regionmask_name)
         print(f"Loaded IFS regional mean data for lead time {lead} weeks.")
         
         #Run prediction
@@ -398,8 +398,8 @@ def produce_s2s_idr_forecasts(
 
         #save to netcdf
         os.makedirs(OUT_FOLDER, exist_ok=True)
-        hist.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_histogram_{shapefile_name.split('.')[0]}_{lead}wklead.nc"))
-        print(f"Saved histogram for lead time {lead} weeks to: {OUT_FOLDER}/{year}-{month:02d}-{day:02d}_histogram_{shapefile_name.split('.')[0]}_{lead}wklead.nc")
+        hist.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
+        print(f"Saved histogram for lead time {lead} weeks to: {OUT_FOLDER}/{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc")
 
         #QUANTILES CURRENTLY NOT NEEDED
         #Produce quantiles of predictions for this lead time and save to netcdf
@@ -420,5 +420,5 @@ def produce_s2s_idr_forecasts(
 
         #save to netcdf
         # os.makedirs(OUT_FOLDER, exist_ok=True)
-        # pred_quantiles.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_quantiles_{shapefile_name.split('.')[0]}_{lead}wklead.nc"))
-        # print(f"Saved quantiles for lead time {lead} weeks to: {OUT_FOLDER}/{year}-{month:02d}-{day:02d}_quantiles_{shapefile_name.split('.')[0]}_{lead}wklead.nc")
+        # pred_quantiles.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_quantiles_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
+        # print(f"Saved quantiles for lead time {lead} weeks to: {OUT_FOLDER}/{year}-{month:02d}-{day:02d}_quantiles_{regionmask_name.split('.')[0]}_{lead}wklead.nc")

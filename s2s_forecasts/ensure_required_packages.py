@@ -79,8 +79,6 @@ def ensure_packages(extra_packages=None):
     """
     print("Ensuring required packages")
     #Extra specified packages
-    ensure_package("geopandas")
-    ensure_package("regionmask")
     if extra_packages is not None:
         for pkg in extra_packages:
             ensure_package(pkg)

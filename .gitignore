@@ -16,3 +16,4 @@ s2s_forecasts/idr_models.zip
 s2s_forecasts/*.ipynb
 isodisreg/
 s2s_forecasts/test_forecasts/
+interface/view_forecasts/data/counts_s2s

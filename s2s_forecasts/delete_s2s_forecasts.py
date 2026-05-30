@@ -1,7 +1,7 @@
 from download_s2s_data import delete_grib_and_index
 import os
 
-def delete_forecast_files(year, month, day, lead_times_weeks, RAW_S2S_DATA_DIR, PROC_S2S_DATA_DIR, REG_MEAN_DATA_DIR, shapefile_name):
+def delete_forecast_files(year, month, day, lead_times_weeks, RAW_S2S_DATA_DIR, PROC_S2S_DATA_DIR, REG_MEAN_DATA_DIR, regionmask_name):
     """Delete forecast files for a given date and lead times.
     args:        year, month, day: date of forecast initialization
         lead_times_weeks: list of lead weeks to delete, e.g. [1, 2, 3]
@@ -25,7 +25,7 @@ def delete_forecast_files(year, month, day, lead_times_weeks, RAW_S2S_DATA_DIR, 
             except Exception as e:
                 print(f"Error deleting file {proc_fname}: {e}")
 
-        reg_mean_fname = os.path.join(REG_MEAN_DATA_DIR, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead_{shapefile_name.split('.')[0]}.nc")
+        reg_mean_fname = os.path.join(REG_MEAN_DATA_DIR, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead_{regionmask_name.split('.')[0]}.nc")
 
         #Check if file exists before trying to delete
         if os.path.isfile(reg_mean_fname):

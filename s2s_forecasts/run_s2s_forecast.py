@@ -13,7 +13,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent                       # .../
 RAW_S2S_DATA_DIR = SCRIPT_DIR / "s2s_data" / "raw"
 PROC_S2S_DATA_DIR = SCRIPT_DIR / "s2s_data" / "processed"
 REG_MEAN_DATA_DIR = SCRIPT_DIR / "s2s_data" / "regional_means"
-SHAPEFILE_DIR = SCRIPT_DIR / "shapefiles"
+SHAPEFILE_DIR = SCRIPT_DIR / "regionmasks"
 IDR_MODEL_FOLDER = SCRIPT_DIR / "idr_models"
 FCST_OUT_DIR = PROJECT_ROOT / "interface" / "view_forecasts" / "data" / "counts_s2s"
 # FCST_OUT_DIR = Path("/nf2/web/rain/ICPAC/operational/s2s_forecasts/s2s_counts")  # FOR OXFORD USE
@@ -23,7 +23,7 @@ FCST_OUT_DIR = PROJECT_ROOT / "interface" / "view_forecasts" / "data" / "counts_
 lead_times_weeks = [1,2,3]
 data_source = 'Oxford'
 # data_source = 'ECMWF' #FOR OXFORD USE
-SHAPEFILE_NAME = "admin1_merged_KeEtRwUg.gpkg"
+regionmask_name = "admin1_merged_KeEtRwUg_region_masks_1x1_bool.nc"
 
 os.makedirs(RAW_S2S_DATA_DIR, exist_ok=True)
 os.makedirs(PROC_S2S_DATA_DIR, exist_ok=True)
@@ -89,8 +89,8 @@ def main():
         lead_times_weeks=lead_times_weeks,
         IN_FOLDER=str(PROC_S2S_DATA_DIR),
         OUT_FOLDER=str(REG_MEAN_DATA_DIR),
-        SHAPEFILE_FOLDER=str(SHAPEFILE_DIR),
-        shapefile_name=SHAPEFILE_NAME,
+        REGIONMASK_FOLDER=str(SHAPEFILE_DIR),
+        regionmask_name=regionmask_name,
         region_subset=None,
     )
 
@@ -102,7 +102,7 @@ def main():
         lead_times_weeks=lead_times_weeks,
         bins="default",
         IDR_MODEL_FOLDER=str(IDR_MODEL_FOLDER),
-        shapefile_name=SHAPEFILE_NAME,
+        regionmask_name=regionmask_name,
         REGIONAL_MEAN_FOLDER=str(REG_MEAN_DATA_DIR),
         OUT_FOLDER=str(FCST_OUT_DIR),
     )
@@ -117,7 +117,7 @@ def main():
             str(RAW_S2S_DATA_DIR),
             str(PROC_S2S_DATA_DIR),
             str(REG_MEAN_DATA_DIR),
-            SHAPEFILE_NAME,
+            regionmask_name,
         )
 
 if __name__ == "__main__":

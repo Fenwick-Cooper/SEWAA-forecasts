@@ -1,3 +1,5 @@
+# Shouldn't be needed any more as IDR included; and geopandas dependency removed.
+
 import importlib.util
 import subprocess
 import sys

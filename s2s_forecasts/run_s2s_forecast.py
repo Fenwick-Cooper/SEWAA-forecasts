@@ -62,7 +62,7 @@ def main():
             delete_forecasts = True
 
     #Check package requirements
-    ensure_packages()
+    # ensure_packages()
 
     from download_s2s_data import download_and_process_s2s_data
     from make_s2s_regional_means import make_regional_means

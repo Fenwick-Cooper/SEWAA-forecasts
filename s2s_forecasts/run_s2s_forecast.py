@@ -2,14 +2,21 @@
 import argparse
 from datetime import datetime
 from ensure_required_packages import ensure_packages
+from pathlib import Path
+import os
 
-#Define directories -- defaults here will save in the s2s_forecasts directory
-RAW_S2S_DATA_DIR = "./s2s_forecasts/s2s_data/raw"
-PROC_S2S_DATA_DIR = "./s2s_forecasts/s2s_data/processed"
-REG_MEAN_DATA_DIR = "./s2s_forecasts/s2s_data/regional_means"
-SHAPEFILE_DIR = "./s2s_forecasts/shapefiles"
-FCST_OUT_DIR = "./interface/view_forecasts/data/counts_s2s"
-# FCST_OUT_DIR = "/nf2/web/rain/ICPAC/operational/s2s_forecasts/s2s_counts" #FOR OXFORD USE
+# Paths are anchored to this file, not the current working directory.
+SCRIPT_DIR = Path(__file__).resolve().parent          # .../s2s_forecasts
+PROJECT_ROOT = SCRIPT_DIR.parent                       # .../
+
+# Define directories
+RAW_S2S_DATA_DIR = SCRIPT_DIR / "s2s_data" / "raw"
+PROC_S2S_DATA_DIR = SCRIPT_DIR / "s2s_data" / "processed"
+REG_MEAN_DATA_DIR = SCRIPT_DIR / "s2s_data" / "regional_means"
+SHAPEFILE_DIR = SCRIPT_DIR / "shapefiles"
+IDR_MODEL_FOLDER = SCRIPT_DIR / "idr_models"
+FCST_OUT_DIR = PROJECT_ROOT / "interface" / "view_forecasts" / "data" / "counts_s2s"
+# FCST_OUT_DIR = Path("/nf2/web/rain/ICPAC/operational/s2s_forecasts/s2s_counts")  # FOR OXFORD USE
 
 
 #Global settings
@@ -17,6 +24,12 @@ lead_times_weeks = [1,2,3]
 data_source = 'Oxford'
 # data_source = 'ECMWF' #FOR OXFORD USE
 SHAPEFILE_NAME = "admin1_merged_KeEtRwUg.gpkg"
+
+os.makedirs(RAW_S2S_DATA_DIR, exist_ok=True)
+os.makedirs(PROC_S2S_DATA_DIR, exist_ok=True)
+os.makedirs(REG_MEAN_DATA_DIR, exist_ok=True)
+os.makedirs(FCST_OUT_DIR, exist_ok=True)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run S2S download, regional means, and forecast pipeline.")
@@ -64,9 +77,9 @@ def main():
         data_source=data_source,
         lead_times_weeks=lead_times_weeks,
         delete_grib=True,
-        RAW_FOLDER=RAW_S2S_DATA_DIR,
-        PROC_FOLDER=PROC_S2S_DATA_DIR
-        )
+        RAW_FOLDER=str(RAW_S2S_DATA_DIR),
+        PROC_FOLDER=str(PROC_S2S_DATA_DIR),
+    )
 
     #Make the regional means for this date
     make_regional_means(
@@ -74,11 +87,11 @@ def main():
         month,
         day,
         lead_times_weeks=lead_times_weeks,
-        IN_FOLDER=PROC_S2S_DATA_DIR,
-        OUT_FOLDER=REG_MEAN_DATA_DIR,
-        SHAPEFILE_FOLDER=SHAPEFILE_DIR,
+        IN_FOLDER=str(PROC_S2S_DATA_DIR),
+        OUT_FOLDER=str(REG_MEAN_DATA_DIR),
+        SHAPEFILE_FOLDER=str(SHAPEFILE_DIR),
         shapefile_name=SHAPEFILE_NAME,
-        region_subset=None
+        region_subset=None,
     )
 
     #Run forecast script to make IDR forecast for this date and save histograms
@@ -87,24 +100,24 @@ def main():
         month,
         day,
         lead_times_weeks=lead_times_weeks,
-        bins='default',
-        IDR_MODEL_FOLDER='./s2s_forecasts/idr_models',
+        bins="default",
+        IDR_MODEL_FOLDER=str(IDR_MODEL_FOLDER),
         shapefile_name=SHAPEFILE_NAME,
-        REGIONAL_MEAN_FOLDER=REG_MEAN_DATA_DIR,
-        OUT_FOLDER=FCST_OUT_DIR
+        REGIONAL_MEAN_FOLDER=str(REG_MEAN_DATA_DIR),
+        OUT_FOLDER=str(FCST_OUT_DIR),
     )
 
     #Delete forecast files if requested
     if delete_forecasts:
         delete_forecast_files(
-        year,
-        month,
-        day,
-        lead_times_weeks,
-        RAW_S2S_DATA_DIR,
-        PROC_S2S_DATA_DIR,
-        REG_MEAN_DATA_DIR,
-        SHAPEFILE_NAME
+            year,
+            month,
+            day,
+            lead_times_weeks,
+            str(RAW_S2S_DATA_DIR),
+            str(PROC_S2S_DATA_DIR),
+            str(REG_MEAN_DATA_DIR),
+            SHAPEFILE_NAME,
         )
 
 if __name__ == "__main__":

@@ -549,6 +549,11 @@ if __name__=='__main__':
             subprocess.run(["python", "s2s_forecasts/run_s2s_forecast.py", "--date", date_str, "--delete_forecasts", "Y"])
         else:
             subprocess.run(["python", "s2s_forecasts/run_s2s_forecast.py", "--date", date_str])
+        
+        # Make a list of available dates for JavaScript
+        print("Listing 6h counts for the interface.")
+        run_dir = "s2s_forecasts"
+        subprocess.run(["python", "find_available_dates.py"], cwd=run_dir)
 
     # Show that we are done (and haven't crashed)
     print("Script run_forecast.py is done!")

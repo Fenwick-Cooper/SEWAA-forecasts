@@ -382,6 +382,7 @@ def produce_s2s_idr_forecasts(
         hist = histogram_regions(
             preds,
             bins=bins,
+            density=False,
         )
         print(f"Produced histogram of IDR predictions for lead time {lead} weeks.")
 
@@ -395,9 +396,10 @@ def produce_s2s_idr_forecasts(
         hist = split_and_replicate_regions(hist, dim="region", sep=",")
 
         #save to netcdf
-        os.makedirs(OUT_FOLDER, exist_ok=True)
-        hist.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
-        print(f"Saved histogram for lead time {lead} weeks to: {OUT_FOLDER}/{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc")
+        out_folder_year = os.path.join(OUT_FOLDER, f"{year}")
+        os.makedirs(out_folder_year, exist_ok=True)
+        hist.to_netcdf(os.path.join(out_folder_year, f"{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
+        print(f"Saved histogram for lead time {lead} weeks to: {out_folder_year}/{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc")
 
         #QUANTILES CURRENTLY NOT NEEDED
         #Produce quantiles of predictions for this lead time and save to netcdf

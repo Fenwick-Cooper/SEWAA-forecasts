@@ -127,7 +127,7 @@ def predict_idr_xarray(models, fcst_new: xr.Dataset):
 
     return predictions
 
-def histogram(self, bins=np.linspace(0,20,11), density=False):
+def histogram(self, bins=np.linspace(0,20,11)):
     """
     Histogram of IDR predictions.
 
@@ -138,8 +138,6 @@ def histogram(self, bins=np.linspace(0,20,11), density=False):
     range : tuple, optional
         Lower and upper range of the bins. If None and bins is an int,
         the range is taken from all prediction points.
-    density : bool, optional
-        If True, return probability density instead of counts.
 
     Returns
     -------
@@ -152,7 +150,13 @@ def histogram(self, bins=np.linspace(0,20,11), density=False):
 
     def hist0(data):
         x = np.asarray(data.points)
-        h, edges = np.histogram(x, bins=bins, density=density)
+        h, edges = np.histogram(x, bins=bins, density=False)
+
+        # Probabilities: sum of bins equals 1
+        total = h.sum()
+        if total > 0:
+            h = h / total
+
         return h, edges
 
     results = list(map(hist0, predictions))
@@ -161,7 +165,7 @@ def histogram(self, bins=np.linspace(0,20,11), density=False):
 
     return histograms.squeeze(), bin_edges
 
-def histogram_regions(preds_by_region, bins=np.linspace(0,20,11), density=False):
+def histogram_regions(preds_by_region, bins=np.linspace(0,20,11)):
     """
     Apply existing histogram() method across regions and return
     a single DataArray with dims ('region', 'bin').
@@ -188,7 +192,6 @@ def histogram_regions(preds_by_region, bins=np.linspace(0,20,11), density=False)
         hist, _ = histogram(
             preds,
             bins=bins,
-            density=density,
         )
 
         regions.append(region)
@@ -206,9 +209,6 @@ def histogram_regions(preds_by_region, bins=np.linspace(0,20,11), density=False)
         name="histogram",
     )
     return da.to_dataset(name='counts')
-
-import numpy as np
-import xarray as xr
 
 def quantiles(self, qs=np.linspace(0,1,50)):
     """

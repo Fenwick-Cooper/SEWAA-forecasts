@@ -176,7 +176,6 @@ def histogram_regions(preds_by_region, bins=np.linspace(0,20,11)):
         Mapping {region_name: IDR_class}
     bins : int or sequence
     range : tuple
-    density : bool
 
     Returns
     -------
@@ -383,7 +382,6 @@ def produce_s2s_idr_forecasts(
         hist = histogram_regions(
             preds,
             bins=bins,
-            density=True,
         )
         print(f"Produced histogram of IDR predictions for lead time {lead} weeks.")
 

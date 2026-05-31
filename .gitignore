@@ -7,13 +7,13 @@
 .ipynb_checkpoints
 
 #S2S working files and folders
-s2s_forecasts/s2s_data/forecasts/
-s2s_forecasts/s2s_data/regional_means/
-s2s_forecasts/isodisreg/
-s2s_forecasts/s2s_data/
-s2s_forecasts/idr_models/
-s2s_forecasts/idr_models.zip
-s2s_forecasts/*.ipynb
-isodisreg/
-s2s_forecasts/test_forecasts/
-interface/view_forecasts/data/counts_s2s
+#s2s_forecasts/s2s_data/forecasts/
+#s2s_forecasts/s2s_data/regional_means/
+#s2s_forecasts/isodisreg/
+#s2s_forecasts/s2s_data/
+#s2s_forecasts/idr_models/
+#s2s_forecasts/idr_models.zip
+#s2s_forecasts/*.ipynb
+#isodisreg/
+#s2s_forecasts/test_forecasts/
+#interface/view_forecasts/data/counts_s2s

@@ -72,7 +72,7 @@ def main():
     #Export region name for plotting
     import json
 
-    with open("region_config.json", "w") as f:
+    with open(f"{FCST_OUT_DIR}/region_config.json", "w") as f:
         json.dump({"regionMaskName": regionmask_name}, f)
 
     #Run download script to get S2S data for this date

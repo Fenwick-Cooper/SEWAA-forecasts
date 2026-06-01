@@ -9,9 +9,16 @@
 import os
 import numpy as np
 import json
+from pathlib import Path
+import re
+from run_s2s_forecast import regionmask_name
+
+# Paths are anchored to this file, not the current working directory.
+SCRIPT_DIR = Path(__file__).resolve().parent          # .../s2s_forecasts
+PROJECT_ROOT = SCRIPT_DIR.parent                       # .../
 
 # The directory with the counts data in
-counts_dir = "../interface/view_forecasts/data/counts_s2s"
+counts_dir = str(PROJECT_ROOT / "interface" / "view_forecasts" / "data" / "counts_s2s")
 
 # Find the years to include
 counts_years = []
@@ -31,27 +38,21 @@ for i in range(len(counts_years)):
 
 # Extract the dates and times from each compatible file name
 times_list = []
-for i in range(len(file_list)):
-    file_name = file_list[i]
+pattern = re.compile(r'^(\d{4})-(\d{2})-(\d{2})_(.+)_(\d+)wklead\.nc$')
 
-    # Is the file YYYY-MM-DD_histogram_admin1_merged_KeEtRwUg_Xwklead.nc
-    if (file_name[0:4].isdecimal() and (file_name[4]=='-') and
-        file_name[5:7].isdecimal() and (file_name[7]=='-') and
-        file_name[8:10].isdecimal() and
-        (file_name[10:44]=='_histogram_admin1_merged_KeEtRwUg_') and
-        file_name[44].isdecimal() and
-        (file_name[45:54]=='wklead.nc')):
+for file_name in file_list:
+    m = pattern.match(file_name)
+    if m:
+        year = int(m.group(1))
+        month = int(m.group(2))
+        day = int(m.group(3))
+        regmask = m.group(4)
+        valid_week = int(m.group(5))
 
-        # Start time
-        year = int(file_name[0:4])
-        month = int(file_name[5:7])
-        day = int(file_name[8:10])
+        if regmask == regionmask_name.split(".")[0]:
+            times_list.append([year, month, day, valid_week])
 
-        # Valid time
-        valid_week = int(file_name[44])
-
-        # Include this file in the list
-        times_list.append([year,month,day,valid_week])
+        times_list.append([year, month, day, valid_week])
 
 # Define the sort criteria
 def sortFunc(e):

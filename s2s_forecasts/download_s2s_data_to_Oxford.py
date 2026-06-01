@@ -204,8 +204,6 @@ def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=Tru
     -------
     None
     """
-    os.makedirs(OUT_FOLDER, exist_ok=True)
-
     #Open GRIB file with xarray
     fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tprate.grib")
     try:
@@ -224,6 +222,8 @@ def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=Tru
         ds_week_mean = ds_week.mean('number').rename({'tprate': 'tp_mean'}) #Renaming variable to avoid confusion with std
         ds_week_mean['tp_std'] = ds_week.std('number').tprate #Calculate std across ensemble members and add as new variable in same dataset
         ds_week_mean.attrs['units'] = 'mm/week'
+        ds_week_mean["valid_time"] = ds_week_mean["valid_time"] - pd.Timedelta(days=7) #Change valid_time convention to be start of accumulation period, not end
+        ds_week_mean["step"] = ds_week_mean["step"] - pd.Timedelta(days=7) #Change step convention to be start of accumulation period, not end
         ds_week_mean = ds_week_mean.squeeze()
 
         #Save file

@@ -73,7 +73,7 @@ def main():
     import json
 
     with open(f"{FCST_OUT_DIR}/region_config.json", "w") as f:
-        json.dump({"regionMaskName": regionmask_name}, f)
+        json.dump({"regionMaskName": regionmask_name.split(".")[0]}, f)
 
     #Run download script to get S2S data for this date
     download_and_process_s2s_data(

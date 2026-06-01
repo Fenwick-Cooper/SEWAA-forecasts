@@ -69,6 +69,12 @@ def main():
     from make_s2s_forecast import produce_s2s_idr_forecasts
     from delete_s2s_forecasts import delete_forecast_files
 
+    #Export region name for plotting
+    import json
+
+    with open("region_config.json", "w") as f:
+        json.dump({"regionMaskName": regionmask_name}, f)
+
     #Run download script to get S2S data for this date
     download_and_process_s2s_data(
         year,

@@ -40,6 +40,16 @@ function pProbabilityThresholdInput() {
 	drawPlots();
 }
 
+// Gets the region tag from the generated json file
+let regionMaskName = "admin1_merged__KeEtRwUg_region_masks_1x1_bool.nc"; // fallback
+
+async function loadRegionConfig() {
+    const response = await fetch("../data/counts_s2s/region_config.json");
+    const config = await response.json();
+    regionMaskName = config.regionMaskName;
+}
+
+
 // Loads and plots the currently selected forecast
 async function loadForecast() {
 	let year = document.getElementById("initYearSelect").value;
@@ -53,7 +63,9 @@ async function loadForecast() {
 	let fileName = countsDir+"/"+year+"/"+year+"-"
 								 +month.padStart(2,'0')+"-"
 								 +day.padStart(2,'0')
-								 +"_histogram_admin1_merged_KeEtRwUg_"
+								 +"_histogram_"
+								 +regionMaskName
+								 +"_"
 								 +validTimeMenu+"wklead.nc";
 									 
 	// Load data into the forecastDataObject
@@ -256,6 +268,9 @@ async function init() {
 	
 	// Load a list of the available forecasts
 	await loadDates();
+
+	// Load the regionmask name to get the right file
+	await loadRegionConfig();
 	
 	// Load the currently selected forecast
 	await loadForecast();

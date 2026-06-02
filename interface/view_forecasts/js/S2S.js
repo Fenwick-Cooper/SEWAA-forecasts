@@ -331,8 +331,8 @@ async function drawPlots() {
 		canvasElement.innerHTML = "Your browser does not support the HTML canvas tag.";
 		// canvasElement.style="border:1px solid grey";
 		
-		// Place the histogram canvas just after the mapImage
-		const statusElement = document.getElementById("mapImage");
+		// Place the histogram canvas just after the statusText
+		const statusElement = document.getElementById("statusText");
 		statusElement.insertAdjacentElement("afterend", canvasElement);
 					
 		canvasNum += 1;

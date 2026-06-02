@@ -376,7 +376,7 @@ def produce_s2s_idr_forecasts(
         hist = hist.expand_dims(("time", "valid_time")).squeeze()
         hist['country'] = ("region", data.country.values)
 
-        hist = split_and_replicate_regions(hist, dim="region", sep=",")
+        # hist = split_and_replicate_regions(hist, dim="region", sep=",")
 
         #Add metadata
         hist = hist.assign_attrs({

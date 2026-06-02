@@ -1,6 +1,6 @@
 // Code for the S2S forecast plots
 
-let regionName = "Nairobi"
+let regionName = "Rwanda"
 let maxRain = 30;				// Rainfall threshold in mm/week
 let probability = 0.95;			// Between 0 and 1
 

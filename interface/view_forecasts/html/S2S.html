@@ -9,6 +9,18 @@
 <h2>7 day rainfall accumulation forecasts</h2>
 
 <p>
+	Model:
+	<span id="modelInfo">
+	: The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a> 
+	<a href="https://www.ecmwf.int/en/forecasts/about-our-forecasts/sub-seasonal-range-forecasts" target="_blank">
+	ECWMF IFS sub-seasonal range forecast</a>  at 1 degree resolution is aggregated to weekly mean regional means at the admin 1 level (some small regions are merged), then post-processed using
+	<a href="https://arxiv.org/pdf/1909.03725" target="_blank">
+	isotonic distributional regression (IDR)</a> trained on <a href="https://gpm.nasa.gov/data/imerg" target="_blank"> IMERG</a>
+	v7 to produce forecasts of 7d rainfall intervals. Model version 1. Trained on all hindcasts from 2004-2025 inclusive.
+	</span>
+	</p>
+
+<p>
 Region:
 <select id="regionSelect" onchange="regionSelect()">
 	<optgroup label="Ethiopia">
@@ -27,9 +39,9 @@ Region:
 	  <option value="Samburu">Samburu</option>
 	  <option value="Isiolo">Isiolo</option>
 	  <option value="Kajiado">Kajiado</option>
-	  <option value="Tana River, Kilifi & Mombasa">Tana River, Kilifi & Mombasa</option>
+	  <option value='Tana River, Kilifi & Mombasa'>Tana River, Kilifi & Mombasa</option>
 	  <option value="Garissa & Lamu">Garissa & Lamu</option>
-	  <option value="Turkana, Trans Nzoia & West Pokot">Turkana, Trans Nzoia & West Pokot</option>
+	  <option value='Turkana, Trans Nzoia & West Pokot'>Turkana, Trans Nzoia & West Pokot</option>
 	  <option value="Western Kenya">Western Kenya</option>
 	  <option value="Central Kenya including Nairobi">Central Kenya including Nairobi</option>
 	  <option value="Kwale & Taita Taveta">Kwale & Taita Taveta</option>
@@ -70,8 +82,18 @@ Probability threshold:
 
 <p id="statusText"> Status </p>
 
+<style>
+	#bottomImage {
+	  display: block;
+	  margin: 20px 0 0;
+	  width: 650px;
+	  height: auto;
+	}
+  </style>
+<img id="bottomImage" src="figures/regions_for_s2s.png" alt="Regions to which histograms refer" size=>
+
 <script src="../js/plotForecastsMin.js"></script>
 <script src="../js/s2sCounts.js"></script>
 <script src="../js/S2S.js"></script>
 </body>
-</html> 
+</html>

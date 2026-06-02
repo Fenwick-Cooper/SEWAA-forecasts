@@ -25,7 +25,7 @@ counts_years = []
 dirs = os.listdir(counts_dir)
 for dir_name in dirs:
     if dir_name.isdigit():
-        if (int(dir_name) > 2020) and (int(dir_name) < 3000):   # Optimistic!
+        if (int(dir_name) > 2004) and (int(dir_name) < 3000):   # Optimistic!
             counts_years.append(int(dir_name))
 
 # Where to write the .json file with the list of counts files

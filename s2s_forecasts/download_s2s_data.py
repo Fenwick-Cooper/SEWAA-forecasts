@@ -136,7 +136,7 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
         "stream": "eefo",
         "time": "00:00:00",
         "type": "fcmean",
-        "grid": "1/1",
+        "grid": "0.4/0.4",
     }
     #Send request
     server.execute(request, fname)
@@ -298,11 +298,17 @@ def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_t
     print("Starting download and processing of S2S data for date: ", f"{year}-{month:02d}-{day:02d}")
     
     if data_source == 'Oxford':
-        #Download proccsed data from Oxford S2S database
+        #Download proccsed data from Oxford S2S database -- no need to process as data in the Oxford database
+        # is already processed
         download_s2s_data_oxford(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=PROC_FOLDER)
-    elif data_source == 'ECMWF':
+    elif data_source in ['ECMWF', 'MARS', 'ECMWFAPI']:
         #Download directly from ECMWF API and process
         download_s2s_data_ecmwf(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
         process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
+    elif data_source in ['ECMWFOpen', 'OpenData', 'Open Data', 'open data']:
+        #TO DO -- enable support for accessing 1.5 degree data from ECMWF open data
+        raise ValueError(f"Data source {data_source} not yet supported -- to be supported in future update")
+        #download_s2s_data_open(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
+        # process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
     else:
         raise ValueError(f"Invalid data source: {data_source}. Supported sources are 'Oxford' and 'ECMWF'.")

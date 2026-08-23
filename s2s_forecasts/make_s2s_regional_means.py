@@ -121,7 +121,7 @@ def make_regional_means(year, month, day, lead_times_weeks=[1,2,3], IN_FOLDER=".
     countries = mask.country.values
     #Iterate through lead times, opening file and calculating regional means for each
     for week in lead_times_weeks:
-        fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc")
+        fname = os.path.join(IN_FOLDER, str(year), f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc")
         try:
             print(f"Processing file: {fname}")
             ds = xr.open_dataset(fname)
@@ -138,5 +138,5 @@ def make_regional_means(year, month, day, lead_times_weeks=[1,2,3], IN_FOLDER=".
         #save regional means to netcdf
         os.makedirs(OUT_FOLDER, exist_ok=True)
         out_fname = f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead_{regionmask_name.split('.')[0]}.nc"
-        ds_regional.to_netcdf(os.path.join(OUT_FOLDER, out_fname))
+        ds_regional.to_netcdf(os.path.join(OUT_FOLDER, str(year), out_fname))
         print(f"Saved regional means for lead time {week} weeks to: {out_fname}")

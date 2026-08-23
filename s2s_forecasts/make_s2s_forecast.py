@@ -5,7 +5,8 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 from get_idr_models import download_idr_models_oxford
-from local_idr import LocalIDRModel, save_idr_model, load_idr_state
+from make_s2s_regional_means import load_fraction_mask
+from local_idr import LocalIDRModel
 import re
 
 def _slugify(text):
@@ -16,7 +17,7 @@ def _slugify(text):
     return text
 
 
-def load_idr_models(path, ds_with_regions):
+def load_idr_models(path, data_with_regions, regionmask_name=''):
     """
     Load one model per region folder, where each folder contains model_state.json.
     Return a dict keyed by the region names from the NetCDF.
@@ -24,13 +25,13 @@ def load_idr_models(path, ds_with_regions):
     if not isinstance(path, Path):
         path = Path(path)
 
-    # download_idr_models_oxford(OUT_FOLDER=path.parent)
+    download_idr_models_oxford(OUT_FOLDER=path.parent, regionmask_name=regionmask_name) #Check if models are there and download from Oxford if not
 
-    ds = ds_with_regions
-
+    ds = data_with_regions
+    
     if "region" not in ds.coords and "region" not in ds.dims:
         raise KeyError(
-            f"Could not find a 'region' coordinate/dimension in {region_netcdf_path}. "
+            f"Could not find a 'region' coordinate/dimension in {path}. "
             f"Available coords: {list(ds.coords)}; dims: {list(ds.dims)}"
         )
 
@@ -61,7 +62,7 @@ def load_idr_models(path, ds_with_regions):
 
     return models
 
-def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLDER="./s2s_data/regional_means", regionmask_name="admin1_merged_KeEtRwUg.gpkg"):
+def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLDER="./s2s_data/regional_means", regionmask_name=""):
     """
     Load precomputed IFS regional-mean forecast data for a given initialization
     date and lead time.
@@ -88,7 +89,7 @@ def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLD
     FileNotFoundError
         If the expected NetCDF file is missing.
     """
-    fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{lead_times_weeks}wklead_{regionmask_name.split('.')[0]}.nc")
+    fname = os.path.join(IN_FOLDER, str(year), f"{year}-{month:02d}-{day:02d}_tp_meanstd_{lead_times_weeks}wklead_{regionmask_name.split('.')[0]}.nc")
 
     try:
         ds = xr.open_dataset(fname)
@@ -382,7 +383,7 @@ def produce_s2s_idr_forecasts(
         print(f"Processing forecast for {year}-{month:02d}-{day:02d} with lead time {lead} weeks...")
         data = load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=lead, IN_FOLDER=REGIONAL_MEAN_FOLDER, regionmask_name=regionmask_name)
         print(f"Loaded IFS regional mean data for lead time {lead} weeks.")
-        models = load_idr_models(os.path.join(IDR_MODEL_FOLDER, idr_models_name), data)
+        models = load_idr_models(os.path.join(IDR_MODEL_FOLDER, idr_models_name), data, regionmask_name)
         print(f"Loaded IDR models for lead time {lead} weeks.")
 
         
@@ -413,8 +414,8 @@ def produce_s2s_idr_forecasts(
 
         #save to netcdf
         os.makedirs(OUT_FOLDER, exist_ok=True)
-        hist.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
-        print(f"Saved histogram for lead time {lead} weeks to: {OUT_FOLDER}/{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc")
+        hist.to_netcdf(os.path.join(OUT_FOLDER, str(year), f"{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
+        print(f"Saved histogram for lead time {lead} weeks to: {OUT_FOLDER}/{year}/{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc")
 
         #QUANTILES CURRENTLY NOT NEEDED
         #Produce quantiles of predictions for this lead time and save to netcdf

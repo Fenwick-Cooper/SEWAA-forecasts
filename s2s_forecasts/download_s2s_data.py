@@ -8,6 +8,7 @@ from ecmwfapi import ECMWFService
 import os
 import xarray as xr
 import glob
+from pathlib import Path
 
 
 def sort_lat_lon(ds):
@@ -92,6 +93,18 @@ def delete_grib_and_index(fname):
         except Exception as e:
             print(f"Error deleting file {path}: {e}")
 
+def check_if_processed_data_exists(year, month, day, lead_times_weeks=[1,2,3], folder_to_check='./s2s_data/processed'):
+    
+    if not isinstance(folder_to_check, Path):
+        folder_to_check = Path(folder_to_check)
+    
+    fnames = [
+        f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc" for week in lead_times_weeks
+    ]
+
+    return all((folder_to_check / str(year) / fname).exists() for fname in fnames)
+
+
 def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLDER="./s2s_data"):
     """
     Download ECMWF subseasonal-to-seasonal precipitation data for a given date.
@@ -172,9 +185,14 @@ def download_s2s_data_oxford(year, month, day, lead_times_weeks=[1,2,3], OUT_FOL
     
     os.makedirs(OUT_FOLDER, exist_ok=True)
 
+    if not isinstance(OUT_FOLDER, Path):
+        OUT_FOLDER = Path(OUT_FOLDER)
+
     for week in lead_times_weeks:
         fname = f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc"
         file_URL = f"{server}/{year}/{fname}"
+        if (OUT_FOLDER / str(year) / fname).exists():
+            f"File already downloaded to {OUT_FOLDER / str(year)}. Continuing..."
 
         print(f"Checking University of Oxford for {fname}")
         try:
@@ -293,14 +311,22 @@ def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_t
     ValueError
         If data_source is not one of the supported options.
     """
-    print("Starting download and processing of S2S data for date: ", f"{year}-{month:02d}-{day:02d}")
-    
-    if data_source == 'Oxford':
-        #Download proccsed data from Oxford S2S database
-        download_s2s_data_oxford(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=PROC_FOLDER)
-    elif data_source == 'ECMWF':
-        #Download directly from ECMWF API and process
-        download_s2s_data_ecmwf(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
-        process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
+    #Check if processed data already exists
+    f"Checking if processed data already exists in {PROC_FOLDER}"
+    if check_if_processed_data_exists(year, month, day, lead_times_weeks=lead_times_weeks, folder_to_check=PROC_FOLDER):
+        f"Processed data already exists in {PROC_FOLDER}"
+        return
+
+    #If it does not, download:
     else:
-        raise ValueError(f"Invalid data source: {data_source}. Supported sources are 'Oxford' and 'ECMWF'.")
+        print("Processed data not there. Starting download and processing of S2S data for date: ", f"{year}-{month:02d}-{day:02d}")
+        
+        if data_source == 'Oxford':
+            #Download proccsed data from Oxford S2S database
+            download_s2s_data_oxford(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=PROC_FOLDER)
+        elif data_source == 'ECMWF':
+            #Download directly from ECMWF API and process
+            download_s2s_data_ecmwf(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
+            process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
+        else:
+            raise ValueError(f"Invalid data source: {data_source}. Supported sources are 'Oxford' and 'ECMWF'.")

@@ -69,6 +69,12 @@ def main():
     from make_s2s_forecast import produce_s2s_idr_forecasts
     from delete_s2s_forecasts import delete_forecast_files
 
+    #Export region name for plotting
+    import json
+
+    with open(f"{FCST_OUT_DIR}/region_config.json", "w") as f:
+        json.dump({"regionMaskName": regionmask_name.split(".")[0]}, f)
+
     #Run download script to get S2S data for this date
     download_and_process_s2s_data(
         year,
@@ -77,8 +83,8 @@ def main():
         data_source=data_source,
         lead_times_weeks=lead_times_weeks,
         delete_grib=True,
-        RAW_FOLDER=str(RAW_S2S_DATA_DIR),
-        PROC_FOLDER=str(PROC_S2S_DATA_DIR),
+        RAW_FOLDER=f"{str(RAW_S2S_DATA_DIR)}/{year}",
+        PROC_FOLDER=f"{str(PROC_S2S_DATA_DIR)}/{year}",
     )
 
     #Make the regional means for this date
@@ -87,8 +93,8 @@ def main():
         month,
         day,
         lead_times_weeks=lead_times_weeks,
-        IN_FOLDER=str(PROC_S2S_DATA_DIR),
-        OUT_FOLDER=str(REG_MEAN_DATA_DIR),
+        IN_FOLDER=f"{str(PROC_S2S_DATA_DIR)}/{year}",
+        OUT_FOLDER=f"{str(REG_MEAN_DATA_DIR)}/{year}",
         REGIONMASK_FOLDER=str(SHAPEFILE_DIR),
         regionmask_name=regionmask_name,
         region_subset=None,
@@ -103,8 +109,8 @@ def main():
         bins="default",
         IDR_MODEL_FOLDER=str(IDR_MODEL_FOLDER),
         regionmask_name=regionmask_name,
-        REGIONAL_MEAN_FOLDER=str(REG_MEAN_DATA_DIR),
-        OUT_FOLDER=str(FCST_OUT_DIR),
+        REGIONAL_MEAN_FOLDER=f"{str(REG_MEAN_DATA_DIR)}/{year}",
+        OUT_FOLDER=f"{str(FCST_OUT_DIR)}/{year}",
     )
 
     #Delete forecast files if requested
@@ -114,9 +120,9 @@ def main():
             month,
             day,
             lead_times_weeks,
-            str(RAW_S2S_DATA_DIR),
-            str(PROC_S2S_DATA_DIR),
-            str(REG_MEAN_DATA_DIR),
+            f"{str(RAW_S2S_DATA_DIR)}/{year}",
+            f"{str(PROC_S2S_DATA_DIR)}/{year}",
+            f"{str(REG_MEAN_DATA_DIR)}/{year}",
             regionmask_name,
         )
 

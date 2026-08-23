@@ -2,7 +2,7 @@ from asyncio import subprocess
 import platform
 import subprocess
 import requests
-
+import pandas as pd
 import numpy as np
 from ecmwfapi import ECMWFService
 import os
@@ -149,7 +149,7 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
         "stream": "eefo",
         "time": "00:00:00",
         "type": "fcmean",
-        "grid": "1/1",
+        "grid": "0.4/0.4",
     }
     #Send request
     server.execute(request, fname)
@@ -263,6 +263,8 @@ def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=Tru
         ds_week_mean = ds_week.mean('number').rename({'tprate': 'tp_mean'}) #Renaming variable to avoid confusion with std
         ds_week_mean['tp_std'] = ds_week.std('number').tprate #Calculate std across ensemble members and add as new variable in same dataset
         ds_week_mean.attrs['units'] = 'mm/week'
+        ds_week_mean["valid_time"] = ds_week_mean["valid_time"] - pd.Timedelta(days=7) #Change valid_time convention to be start of accumulation period, not end
+        ds_week_mean["step"] = ds_week_mean["step"] - pd.Timedelta(days=7) #Change step convention to be start of accumulation period, not end
         ds_week_mean = ds_week_mean.squeeze()
 
         #Save file
@@ -328,5 +330,10 @@ def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_t
             #Download directly from ECMWF API and process
             download_s2s_data_ecmwf(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
             process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
+        elif data_source in ['ECMWFOpen', 'OpenData', 'Open Data', 'open data']:
+            #TO DO -- enable support for accessing 1.5 degree data from ECMWF open data
+            raise ValueError(f"Data source {data_source} not yet supported -- to be supported in future update")
+            #download_s2s_data_open(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
+            # process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
         else:
             raise ValueError(f"Invalid data source: {data_source}. Supported sources are 'Oxford' and 'ECMWF'.")

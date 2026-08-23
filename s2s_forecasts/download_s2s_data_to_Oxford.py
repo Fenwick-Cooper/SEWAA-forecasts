@@ -12,6 +12,7 @@ import xarray as xr
 import glob
 import argparse
 from pathlib import Path
+import pandas as pd
 
 OUT_FOLDER = "/nf2/web/rain/ICPAC/operational/s2s_forecasts/s2s_forecast_data"
 
@@ -167,7 +168,7 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
         "stream": "eefo",
         "time": "00:00:00",
         "type": "fcmean",
-        "grid": "1/1",
+        "grid": "0.4/0.4",
     }
     #Send request
     server.execute(request, fname)
@@ -225,6 +226,8 @@ def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=Tru
         ds_week_mean = ds_week.mean('number').rename({'tprate': 'tp_mean'}) #Renaming variable to avoid confusion with std
         ds_week_mean['tp_std'] = ds_week.std('number').tprate #Calculate std across ensemble members and add as new variable in same dataset
         ds_week_mean.attrs['units'] = 'mm/week'
+        ds_week_mean["valid_time"] = ds_week_mean["valid_time"] - pd.Timedelta(days=7) #Change valid_time convention to be start of accumulation period, not end
+        ds_week_mean["step"] = ds_week_mean["step"] - pd.Timedelta(days=7) #Change step convention to be start of accumulation period, not end
         ds_week_mean = ds_week_mean.squeeze()
 
         #Save file

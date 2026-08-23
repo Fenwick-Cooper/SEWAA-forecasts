@@ -85,10 +85,22 @@ def ensure_packages(extra_packages=None):
         for pkg in extra_packages:
             ensure_package(pkg)
 
-    if importlib.util.find_spec("isodisreg") is not None:
+    def is_isodisreg_healthy():
+        try:
+            import isodisreg  # noqa: F401
+            import isodisreg.modeling_evaluation  # noqa: F401
+            return True
+        except Exception:
+            return False
+
+    if is_isodisreg_healthy():
         print("isodisreg is already available")
         return
 
+    # If the package folder exists but import fails, remove it and reinstall
+    if TARGET_DIR.exists():
+        print("isodisreg folder exists but import failed; deleting folder")
+        shutil.rmtree(TARGET_DIR)
     # ISODISREG
     ensure_package("pybind11")
     ensure_package("wheel")

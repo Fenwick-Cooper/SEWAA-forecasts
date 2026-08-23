@@ -140,43 +140,29 @@ def predict_idr_xarray(models, fcst_new: xr.Dataset):
 
     return predictions
 
-def histogram(self, bins=np.linspace(0,20,11)):
+def histogram(pred, bins=np.linspace(0,20,11)):
     """
     Histogram of IDR predictions.
 
     Parameters
     ----------
+    preds : IDR prediction object
     bins : int or sequence, optional
         Number of bins or explicit bin edges. Same meaning as numpy.histogram.
-    range : tuple, optional
-        Lower and upper range of the bins. If None and bins is an int,
-        the range is taken from all prediction points.
 
     Returns
     -------
-    histograms : np.ndarray
-        Array of shape (n_predictions, n_bins)
-    bin_edges : np.ndarray
-        The common bin edges used for the histograms.
+    counts : np.ndarray
+        Array of length (n_bins)
     """
-    predictions = self.predictions
+    cdf_counts = np.append([0],pred.cdf(bins))
+    counts = np.diff(cdf_counts)
 
-    def hist0(data):
-        x = np.asarray(data.points)
-        h, edges = np.histogram(x, bins=bins, density=False)
-
-        # Probabilities: sum of bins equals 1
-        total = h.sum()
-        if total > 0:
-            h = h / total
-
-        return h, edges
-
-    results = list(map(hist0, predictions))
-    histograms = np.vstack([r[0] for r in results])
-    bin_edges = results[0][1]
-
-    return histograms.squeeze(), bin_edges
+    # Probabilities: sum of bins equals 1
+    total = counts.sum()
+    if total > 0:
+        counts = counts / total
+    return counts
 
 def histogram_regions(preds_by_region, bins=np.linspace(0,20,11)):
     """
@@ -189,7 +175,6 @@ def histogram_regions(preds_by_region, bins=np.linspace(0,20,11)):
         Mapping {region_name: IDR_class}
     bins : int or sequence
     range : tuple
-    density : bool
 
     Returns
     -------
@@ -202,9 +187,9 @@ def histogram_regions(preds_by_region, bins=np.linspace(0,20,11)):
 
     for region, preds in preds_by_region.items():
 
-        hist, _ = histogram(
-            preds,
-            bins=bins,
+        hist = histogram(
+            preds, #Prediction for one region
+            bins=bins, #Bins array is UPPER boundary -- so first bin 0 to 0th label, second bin 0th to 1st label
         )
 
         regions.append(region)
@@ -217,14 +202,11 @@ def histogram_regions(preds_by_region, bins=np.linspace(0,20,11)):
         dims=("region", "bins"),
         coords={
             "region": regions,
-            "bins": bins[1:],
+            "bins": bins,
         },
         name="histogram",
     )
     return da.to_dataset(name='counts')
-
-import numpy as np
-import xarray as xr
 
 def quantiles(self, qs=np.linspace(0,1,50)):
     """
@@ -391,16 +373,13 @@ def produce_s2s_idr_forecasts(
         preds = predict_idr_xarray(models, data)
 
         if bins == 'default':
-            #Fenwick's 6 hourly bins
-            bins = [0, 0.24, 0.6, 1.5, 2.4, 3.6, 4.8, 6, 7.5, 9, 10.8, 13.2, 15.6, 18, 21, 24, 28.2, 32.4, 36.6, 42, 48, 54.6, 61.8, 70.2, 79.5, 90, 1000]
-            #multiply each element by 4 to get more reasonable bins for weekly data
-            bins = [x * 4 for x in bins]
+            bins = [1, 2.5, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 85, 100, 120, 150, 200, 250, 300, 500, 1000, 5000]
         
         #Produce histogram of predictions for this lead time and save to netcdf
         hist = histogram_regions(
             preds,
-            bins=bins,
-        )
+            bins=bins
+            )
         print(f"Produced histogram of IDR predictions for lead time {lead} weeks.")
 
         hist = hist.assign_coords(
@@ -410,7 +389,20 @@ def produce_s2s_idr_forecasts(
         hist = hist.expand_dims(("time", "valid_time")).squeeze()
         hist['country'] = ("region", data.country.values)
 
-        hist = split_and_replicate_regions(hist, dim="region", sep=",")
+        # hist = split_and_replicate_regions(hist, dim="region", sep=",")
+
+        #Add metadata
+        hist = hist.assign_attrs({
+            "version":          "1.0 (2026-06-01)",
+            "description":      "Probability ('counts') of weekly mean rainfall in each bin, in each region."
+                                "Weekly means are calculated from IFS subseasonal forecast data, calibrated using isotonic distributional regression. "
+                                "Weekly means represent the accumulation from time valid_time to valid_time+7 days"
+                                "Regions are taken from the regionmask defined in regionmask_name. "
+                                "The 'bins' coordinate refers to the upper boundary of the bin: the first bin is rainfall from 0mm to bins[0]; second bin is rainfall from bins[0] to bins[1] etc. "
+                                "Probabilities sum to 1. ",
+            "regionmask_name":  f"{regionmask_name}",
+            "units":            "mm/week",
+            })
 
         #save to netcdf
         os.makedirs(OUT_FOLDER, exist_ok=True)

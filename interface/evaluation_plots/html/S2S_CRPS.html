@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evaluation plots</title>
+</head>
+<body>
+
+<p>
+<a href="CRPS_comparison.html">CRPS comparisony</a> |
+<a href="categoriesOfReliability.html">Categories of reliability</a> | 
+<a href="costLossRatios.html">Cost-loss ratios</a> |
+7d accumulation CRPS
+</p>
+
+<h2>CRPS comparison</h2>
+<p>
+The CRPS difference between the raw IFS, IFS postprocessed with IDR, and IMERG dressed climatology. This is evaluated for weekly means. 1 week lead time means forecast days 0-6, 2 week lead time means forecast days 7-13 etc.
+</p>
+
+<style>
+	#image {
+	  display: block;
+	  margin: 20px 0 0;
+	  width: 650px;
+	  height: auto;
+	}
+  </style>
+<img id="image" src="../s2s_crps/26-05-31_crps_idr_minus_clim.png" alt="IFS+IDR minus climatology">
+<img id="image" src="../s2s_crps/26-05-31_crps_ifs_minus_clim.png" alt="IFS minus climatology">
+<img id="image" src="../s2s_crps/26-05-31_crps_idr_minus_ifs.png" alt="IFS+IDR minus IFS">
+
+</body>
+</html> 

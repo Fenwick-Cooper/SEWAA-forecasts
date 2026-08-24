@@ -24,14 +24,15 @@ def load_idr_models(path, data_with_regions, regionmask_name=''):
     """
     if not isinstance(path, Path):
         path = Path(path)
-
-    download_idr_models_oxford(OUT_FOLDER=path.parent, regionmask_name=regionmask_name) #Check if models are there and download from Oxford if not
+    
+    #Check if models are there and download from Oxford if not
+    download_idr_models_oxford(OUT_FOLDER=path.parent, regionmask_name=regionmask_name) 
 
     ds = data_with_regions
     
     if "region" not in ds.coords and "region" not in ds.dims:
         raise KeyError(
-            f"Could not find a 'region' coordinate/dimension in {path}. "
+            f"Could not find a 'region' coordinate/dimension in {path}."
             f"Available coords: {list(ds.coords)}; dims: {list(ds.dims)}"
         )
 
@@ -48,6 +49,7 @@ def load_idr_models(path, data_with_regions, regionmask_name=''):
     models = {}
 
     for region_name in region_names:
+        # print(region_name)
         slug = _slugify(region_name)
         region_dir = folder_lookup.get(slug)
 
@@ -89,7 +91,7 @@ def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLD
     FileNotFoundError
         If the expected NetCDF file is missing.
     """
-    fname = os.path.join(IN_FOLDER, str(year), f"{year}-{month:02d}-{day:02d}_tp_meanstd_{lead_times_weeks}wklead_{regionmask_name.split('.')[0]}.nc")
+    fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{lead_times_weeks}wklead_{regionmask_name.split('.')[0]}.nc")
 
     try:
         ds = xr.open_dataset(fname)
@@ -406,7 +408,7 @@ def produce_s2s_idr_forecasts(
 
         #save to netcdf
         os.makedirs(OUT_FOLDER, exist_ok=True)
-        hist.to_netcdf(os.path.join(OUT_FOLDER, str(year), f"{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
+        hist.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
         print(f"Saved histogram for lead time {lead} weeks to: {OUT_FOLDER}/{year}/{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc")
 
         #QUANTILES CURRENTLY NOT NEEDED

@@ -9,11 +9,11 @@ def delete_forecast_files(year, month, day, lead_times_weeks, RAW_S2S_DATA_DIR, 
     """
 
     #First see if grib still exists, and if so delete it and any matching index files
-    grib_fname = os.path.join(RAW_S2S_DATA_DIR, str(year), f"{year}-{month:02d}-{day:02d}_tprate.grib")
+    grib_fname = os.path.join(RAW_S2S_DATA_DIR, f"{year}-{month:02d}-{day:02d}_tprate.grib")
     delete_grib_and_index(grib_fname)
 
     for week in lead_times_weeks:
-        proc_fname = os.path.join(PROC_S2S_DATA_DIR, str(year), f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc")
+        proc_fname = os.path.join(PROC_S2S_DATA_DIR, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc")
 
         #Check if file exists before trying to delete
         if os.path.isfile(proc_fname):
@@ -25,7 +25,7 @@ def delete_forecast_files(year, month, day, lead_times_weeks, RAW_S2S_DATA_DIR, 
             except Exception as e:
                 print(f"Error deleting file {proc_fname}: {e}")
 
-        reg_mean_fname = os.path.join(REG_MEAN_DATA_DIR, str(year), f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead_{regionmask_name.split('.')[0]}.nc")
+        reg_mean_fname = os.path.join(REG_MEAN_DATA_DIR, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead_{regionmask_name.split('.')[0]}.nc")
 
         #Check if file exists before trying to delete
         if os.path.isfile(reg_mean_fname):

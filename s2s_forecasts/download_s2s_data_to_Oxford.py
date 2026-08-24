@@ -149,9 +149,9 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
     None
     """
     server = ECMWFService("mars")
-    fname = os.path.join(OUT_FOLDER, str(year), f"{year}-{month:02d}-{day:02d}_tprate.grib")
+    fname = os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_tprate.grib")
     #Check path exists and make if not
-    os.makedirs(OUT_FOLDER / str(year), exist_ok=True)
+    os.makedirs(OUT_FOLDER, exist_ok=True)
 
     #Calculate step string
     steps = calculate_steps(lead_times_weeks)
@@ -206,10 +206,9 @@ def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=Tru
     None
     """
     os.makedirs(OUT_FOLDER, exist_ok=True)
-    os.makedirs(OUT_FOLDER / str(year), exist_ok=True)
 
     #Open GRIB file with xarray
-    fname = os.path.join(IN_FOLDER, str(year), f"{year}-{month:02d}-{day:02d}_tprate.grib")
+    fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tprate.grib")
     try:
         ds = xr.open_dataset(fname)
     except Exception as e:
@@ -231,9 +230,9 @@ def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=Tru
         ds_week_mean = ds_week_mean.squeeze()
 
         #Save file
-        ds_week_mean.to_netcdf(os.path.join(OUT_FOLDER, str(year), f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc")) #naming convention is week 1 for hours 0-168 etc.
+        ds_week_mean.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc")) #naming convention is week 1 for hours 0-168 etc.
         print(f"Processed and saved S2S data for date: {year}-{month:02d}-{day:02d}, lead time: {week} weeks")
-        print(f"Saved to: {os.path.join(OUT_FOLDER, str(year), f'{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc')}")
+        print(f"Saved to: {os.path.join(OUT_FOLDER, f'{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc')}")
 
     # Delete grib file and index files to clean up
     if delete_grib:

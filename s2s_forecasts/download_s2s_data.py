@@ -102,7 +102,7 @@ def check_if_processed_data_exists(year, month, day, lead_times_weeks=[1,2,3], f
         f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc" for week in lead_times_weeks
     ]
 
-    return all((folder_to_check / str(year) / fname).exists() for fname in fnames)
+    return all((folder_to_check / fname).exists() for fname in fnames)
 
 
 def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLDER="./s2s_data"):
@@ -191,8 +191,8 @@ def download_s2s_data_oxford(year, month, day, lead_times_weeks=[1,2,3], OUT_FOL
     for week in lead_times_weeks:
         fname = f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc"
         file_URL = f"{server}/{year}/{fname}"
-        if (OUT_FOLDER / str(year) / fname).exists():
-            f"File already downloaded to {OUT_FOLDER / str(year)}. Continuing..."
+        if (OUT_FOLDER / fname).exists():
+            f"File already downloaded to {OUT_FOLDER}. Continuing..."
 
         print(f"Checking University of Oxford for {fname}")
         try:
@@ -314,7 +314,7 @@ def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_t
         If data_source is not one of the supported options.
     """
     #Check if processed data already exists
-    f"Checking if processed data already exists in {PROC_FOLDER}"
+    print(f"Checking if processed data already exists in {PROC_FOLDER}")
     if check_if_processed_data_exists(year, month, day, lead_times_weeks=lead_times_weeks, folder_to_check=PROC_FOLDER):
         f"Processed data already exists in {PROC_FOLDER}"
         return

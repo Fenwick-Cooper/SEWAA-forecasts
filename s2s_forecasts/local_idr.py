@@ -36,6 +36,7 @@ from typing import Any, Iterable
 
 import numpy as np
 import pandas as pd
+from scipy.interpolate import interp1d
 
 try:
     # If you vendored the package locally
@@ -61,6 +62,45 @@ class idrpredict:
     predictions: list[predictions_idr]
     incomparables: Any
 
+    def cdf(self, thresholds):
+        """
+        Cumulative distribution function (CDF) of IDR predictions.
+
+        Parameters
+        ----------
+        thresholds : array-like
+            1-D array of thresholds at which the CDF will be evaluated.
+
+        Returns
+        -------
+        np.ndarray
+            Evaluated CDF probabilities. For one prediction this is
+            squeezed to a 1-D array, matching the upstream behaviour.
+        """
+        thresholds = np.asarray(thresholds, dtype=float)
+
+        if thresholds.ndim > 1:
+            raise ValueError("thresholds must be a 1-D array")
+
+        if np.isnan(thresholds).any():
+            raise ValueError("thresholds contains nan values")
+
+        def cdf0(data):
+            return interp1d_adapt(
+                x=np.hstack([
+                    np.min(data.points),
+                    data.points,
+                ]),
+                y=np.hstack([
+                    0.0,
+                    data.ecdf,
+                ]),
+                thresholds=thresholds,
+            )
+
+        return np.vstack(
+            [cdf0(pred) for pred in self.predictions]
+        ).squeeze()
 
 # ---------------------------------------------------------------------------
 # JSON-safe save/load helpers
@@ -206,6 +246,60 @@ def prepare_data(X: pd.DataFrame, groups: dict, orders: dict) -> pd.DataFrame:
 
     return X
 
+def interp1d_adapt(x, y, thresholds):
+    """
+    Evaluate the stepwise CDF interpolation used by the upstream
+    isodisreg implementation.
+
+    Below the first support point, use 'next' interpolation so that
+    the CDF evaluates to zero. At and above the first support point,
+    use the right-continuous ('previous') step function.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    thresholds = np.asarray(thresholds, dtype=float)
+
+    min_points = np.min(x)
+
+    if np.any(thresholds < min_points):
+
+        if thresholds.ndim == 0:
+            return interp1d(
+                x,
+                y,
+                kind="next",
+                fill_value="extrapolate",
+            )(thresholds)
+
+        ix1 = np.where(thresholds < min_points)[0]
+        ix2 = np.where(thresholds >= min_points)[0]
+
+        inter_vals = np.zeros(thresholds.size, dtype=float)
+
+        if ix1.size > 0:
+            inter_vals[ix1] = interp1d(
+                x,
+                y,
+                kind="next",
+                fill_value="extrapolate",
+            )(thresholds[ix1])
+
+        if ix2.size > 0:
+            inter_vals[ix2] = interp1d(
+                x,
+                y,
+                kind="previous",
+                fill_value="extrapolate",
+            )(thresholds[ix2])
+
+        return inter_vals
+
+    return interp1d(
+        x,
+        y,
+        kind="previous",
+        fill_value="extrapolate",
+    )(thresholds)
 
 def _as_1d_float_array(x: Any) -> np.ndarray:
     arr = np.asarray(x, dtype=float)

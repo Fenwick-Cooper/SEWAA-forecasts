@@ -13,6 +13,7 @@ import glob
 import argparse
 from pathlib import Path
 import pandas as pd
+import cdsapi
 
 OUT_FOLDER = "/nf2/web/rain/ICPAC/operational/s2s_forecasts/s2s_forecast_data"
 

@@ -1,6 +1,7 @@
 import json
 import re
 from pathlib import Path
+import shutil
 
 import importlib.metadata as md
 import numpy as np
@@ -11,11 +12,12 @@ from isodisreg import idr
 from local_idr import save_idr_model
 
 #Global options
-region_mask_name = 'EG' #Exclude .nc
-imerg_path = "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/processed_imerg_data/imerg_weekly_2001_2025_africa_1x1.nc"
+region_mask_name = 'kmeans_KeEtRwUg_04deg_bool' #Exclude .nc
+imerg_path = "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/processed_imerg_data/imerg_weekly_2001_2025_africa_04deg.nc"
+model_to_zip = True #whether to zip the model
 lead_times = [1,2,3] #lead times in weeks
 precip_file_str = "tprate_sfc"
-test_years = np.arange(2005, 2025) #Years to test in LOYO validation, and save CRPS for
+test_years = [2024,2025] #Years to test in LOYO validation, and save CRPS for
 subset_regions = None  # e.g. ["Rwanda"]
 idr_training_freq = 2  # use every nth timestep for training
 force_regmean_calculation = True  # Whether to use existing regional means (if present), or recompute
@@ -31,16 +33,17 @@ seasons_to_use = {
 #S2S hindcasts -- processed into one file for each variable/lead time
 s2s_precip_dir = Path("/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/processed_s2s_data")
 #Where to store regional mean data
-storage_dir = Path("/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/regional_data/admin1_merged")
+storage_dir = Path(f"/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/regional_data/{region_mask_name}")
 #Where to save idr models to
-idr_models_dir = Path("/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/idr_models")
+idr_models_dir = Path(f"/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/idr_models/{region_mask_name}_idr_trainevery{idr_training_freq}")
 #Where the region mask is stored
 region_mask_dir = Path("/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/region_masks_for_web")
 #Where to save CRPS to
 crps_out_dir = Path(
     f"/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/CRPS_results/"
-    f"{region_mask_name}_idr_trainevery{idr_training_freq}_annual_allyears"
+    f"{region_mask_name}_idr_trainevery{idr_training_freq}"
 )
+zip_out_name = idr_models_dir.parent / f"idr_models_{region_mask_name}_idr_trainevery{idr_training_freq}" #exclude .zip
 
 #Helper functions
 
@@ -563,6 +566,8 @@ def train_idr_models():
                     f"IDR improvement: {np.around(raw_print.values - idr_print.values, 3)}"
                 )
 
+    if model_to_zip:
+        shutil.make_archive(base_name=str(zip_out_name), format="zip", root_dir=idr_models_dir)
 
 if __name__ == "__main__":
     train_idr_models()

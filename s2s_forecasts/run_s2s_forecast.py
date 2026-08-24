@@ -1,7 +1,6 @@
 #imports
 import argparse
 from datetime import datetime
-from ensure_required_packages import ensure_packages
 from pathlib import Path
 import os
 
@@ -60,9 +59,6 @@ def main():
         if ((args.delete_forecasts == "T") or (args.delete_forecasts == "t") or
             (args.delete_forecasts == "Y") or (args.delete_forecasts == "y")):
             delete_forecasts = True
-
-    #Check package requirements
-    # ensure_packages()
 
     from download_s2s_data import download_and_process_s2s_data
     from make_s2s_regional_means import make_regional_means

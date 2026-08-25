@@ -7,7 +7,7 @@ import shutil
 import os
 
 ZIP_PATH = Path("./s2s_forecasts/isodisreg-master.zip")
-TARGET_DIR = Path("./isodisreg")
+TARGET_DIR = Path("../isodisreg")
 
 def pip_install(*args, env=None):
     """
@@ -131,8 +131,11 @@ def ensure_packages(extra_packages=None):
 
     pip_install(
         "--no-build-isolation",
-        "./isodisreg",
+        TARGET_DIR,
         env=env
     )
 
     print("isodisreg installed successfully")
+
+if __name__ == "__main__":
+    ensure_packages()

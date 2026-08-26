@@ -13,7 +13,7 @@ from local_idr import save_idr_model
 
 #Global options
 region_mask_name = 'kmeans_KeEtRwUg_04deg_bool' #Exclude .nc
-imerg_path = "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/processed_imerg_data/imerg_weekly_2001_2025_africa_04deg.nc"
+imerg_path = "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/processed_imerg_data_04deg/imerg_weekly_2001_2025_africa_04deg.nc"
 model_to_zip = True #whether to zip the model
 lead_times = [1,2,3] #lead times in weeks
 precip_file_str = "tprate_sfc"
@@ -258,8 +258,8 @@ def fit_idr_xarray(obs: xr.DataArray, fcst: xr.Dataset):
         }
 
         orders = {
-            "1": "comp",  # mean monotone
-            "2": "icx",    # spread convex
+            "1": "comp",
+            "2": "icx",
         }
 
         models[region] = idr(
@@ -305,7 +305,7 @@ def crps_idr_xarray(predictions, obs: xr.DataArray):
 
     return xr.concat(crps_list, dim="region")
 
-def ensemble_to_features(ds: xr.Dataset, var="precipitation"):
+def ensemble_to_features(ds: xr.Dataset, var="tprate"):
     da = ds[var]
     return xr.Dataset({
         "ens_mean": da.mean(dim="number"),
@@ -413,9 +413,9 @@ def train_idr_models():
             )
             precip_ds = to_noleap(xr.load_dataset(precip_path))
             regional_means = regional_mean_from_fraction_mask(
-                precip_ds["precipitation"],
+                precip_ds["tprate"],
                 region_mask,
-            ).to_dataset(name="precipitation")
+            ).to_dataset(name="tprate")
             regional_means.to_netcdf(regional_means_path)
         elif regional_means_path.exists():
             print(f"Regional means for lead time {str(lead)} already exist, skipping.")
@@ -423,9 +423,9 @@ def train_idr_models():
             print(f"Creating regional means for lead time {str(lead)} weeks...")
             precip_ds = to_noleap(xr.load_dataset(precip_path))
             regional_means = regional_mean_from_fraction_mask(
-                precip_ds["precipitation"],
+                precip_ds["tprate"],
                 region_mask,
-            ).to_dataset(name="precipitation")
+            ).to_dataset(name="tprate")
             regional_means.to_netcdf(regional_means_path)
 
     # CRPS calculations

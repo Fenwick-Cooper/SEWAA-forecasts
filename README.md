@@ -20,7 +20,7 @@ A conda environment is required, to set this up run the following commands:
 	conda activate tf215gpu
 	python -m pip install tensorflow==2.15
 	pip install scipy==1.17
-	pip install numpy == 1.26.4
+	pip install numpy==1.26.4
 	pip install numba
 	pip install matplotlib
 	pip install seaborn

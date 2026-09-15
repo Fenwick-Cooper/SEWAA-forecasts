@@ -19,6 +19,8 @@ A conda environment is required, to set this up run the following commands:
 	conda create -n tf215gpu python=3.11
 	conda activate tf215gpu
 	python -m pip install tensorflow==2.15
+	pip install scipy==1.17
+	pip install numpy==1.26.4
 	pip install numba
 	pip install matplotlib
 	pip install seaborn
@@ -26,7 +28,7 @@ A conda environment is required, to set this up run the following commands:
 	pip install jupyter
 	pip install xarray
 	pip install netcdf4
-	pip install scikit-learn
+	pip install scikit-learn==1.5.2
 	pip install cfgrib
 	pip install dask
 	pip install tqdm

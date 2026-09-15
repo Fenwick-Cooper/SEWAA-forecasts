@@ -1,0 +1,9 @@
+COUNTRY: "Ethiopia"
+
+MEAN:
+  Kenya: ["NORTH HORR", "Bura Sub County", "Galole Sub County"]
+  Ethiopia: ["Geraleta", "Elidar", "Afdera", "Debay Telatgen", "Quara",
+   "Jida", "Meda Welabu", "Seweyna", "Gashamo", "Shilabo", "Adadle", 
+   "Galadi", "Warder", "Filtu", "Lanfero", "Dima (GM)", "Sofi", "Aleta Wendo"]
+  Rwanda: []
+  Uganda: []

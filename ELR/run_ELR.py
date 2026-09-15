@@ -3,8 +3,10 @@ import glob
 import argparse
 from datetime import datetime,timedelta
 import warnings
+import yaml
 
 import numpy as np
+from scipy.interpolate import BSpline
 from cftime import date2num
 from tqdm import tqdm
 import xarray as xr
@@ -27,12 +29,24 @@ MODEL_PATH = paths['MODEL_PATH']
 if not os.path.exists(OUT_PATH):
     os.makedirs(OUT_PATH)
 
-countries = ['Kenya','Ethiopia','Rwanda']
-county = {'Ethiopia':False,'Kenya':True,'Rwanda':True}
-subcounty = {'Ethiopia':True,'Kenya':True,'Rwanda':False}
+fcstyaml_path = "elr.yaml"
+with open(fcstyaml_path, "r") as f:
+    try:
+        fcst_params = yaml.safe_load(f)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+COUNTRY = fcst_params['COUNTRY']
+MEAN = fcst_params['MEAN'][COUNTRY]
+
+countries = ['Kenya','Ethiopia','Rwanda','Uganda']
+countries = [c for c in countries if c==COUNTRY]
+
+county = {'Ethiopia':False,'Kenya':True,'Rwanda':True,'Uganda':False}
+subcounty = {'Ethiopia':True,'Kenya':True,'Rwanda':False,'Uganda':True}
 
 bounding_box = {'Ethiopia':(32.95418, 47.78942, 3.45, 14.837),'Kenya':(33.935689697, 41.5550830926, -4.559, 5.4877),
-                'Rwanda':(28.87, 30.90, -2.81, -1.151)}
+                'Rwanda':(28.87, 30.90, -2.81, -1.151),'Uganda':(29.58, 35.04, -1.44, 4.25)}
 
 counties = None
 subcounties = None
@@ -60,12 +74,17 @@ def get_model_output(date, model="GAN", day=1):
 
     return ds_fcst
     
-def get_region(Location, geometry_all, ds):
-    region_vectorised = regionmask.Regions(geometry_all, names=[Location])
-    
-    ## follows syntax of lat/lon
-    mask_list = region_vectorised.mask_3D(ds.rename({'longitude':'lon','latitude':'lat'}))
-    mask_list = np.ma.masked_invalid(mask_list)  
+def get_region(Location, geometry_all, ds, use_cluster=False):
+    if use_cluster:
+        ds_mask = xr.open_dataset(f'kmeans_KeEtRwUg_hires_bool.nc')
+        geometry_all = np.ma.masked_invalid(ds_mask.sel({"region":Location}).region_mask)
+        mask_list = [geometry_all]
+    else:
+        region_vectorised = regionmask.Regions(geometry_all, names=[Location])
+        
+        ## follows syntax of lat/lon
+        mask_list = region_vectorised.mask_3D(ds.rename({'longitude':'lon','latitude':'lat'}))
+        mask_list = np.ma.masked_invalid(mask_list)  
 
     temp = ds.precipitation.where(mask_list[0]).stack(latlon=('longitude','latitude'))
     fcst_valid_time = ds.fcst_valid_time
@@ -101,7 +120,7 @@ def get_ELR_predictions(logreg_model, model, ds_sel, day, longitude, latitude, L
         print('file already exists under,',file_name,'delete first then retry')
         return
 
-    thresholds = np.asarray([key for key in logreg_model.keys()])[:4]
+    thresholds = np.asarray([key for key in logreg_model.keys()])[:3]
     latitude_reg = ds_sel.latitude.values
     longitude_reg = ds_sel.longitude.values
     date = ds_sel.time.values[0].astype('datetime64[D]').astype(object).strftime("%Y%M%d")
@@ -128,11 +147,31 @@ def get_ELR_predictions(logreg_model, model, ds_sel, day, longitude, latitude, L
     if model == 'GAN':
 
         X = np.percentile(X, np.linspace(1,100,50), axis=1, method='weibull').T
+
+    if Location in MEAN:
+        X = np.nanmean(X,axis=1)[:,None]
     
     for i, threshold in enumerate(thresholds):
         predictions[0,0,i,mask] = logreg_model[threshold].predict_proba(X)[:,1]
 
     return predictions, mask_full, mask
+
+def patched_setstate(self, state):
+    if isinstance(state, dict):
+        # Ensure both old and modern underscore attributes coexist
+        for base in ["t", "c", "k"]:
+            underscore_base = f"_{base}"
+            if base in state and underscore_base not in state:
+                state[underscore_base] = state[base]  # Copy old to new
+            elif underscore_base in state and base not in state:
+                state[base] = state[underscore_base]  # Copy new to old
+                
+    # Directly update attributes without calling any recursive function
+    if hasattr(self, "__dict__"):
+        self.__dict__.update(state)
+    else:
+        for k, v in state.items():
+            setattr(self, k, v)
 
 if __name__=='__main__':
 
@@ -186,7 +225,7 @@ if __name__=='__main__':
                                 for c in subcounties_loop]
             for d in day:
                 all_days_exist=True
-                if not os.path.exists(OUT_PATH+f'{accumulation}/{country}/county/{model}_{date}_ELR_v{d}.nc'):
+                if not os.path.exists(OUT_PATH+f'{accumulation}/{country}/subcounty/{model}_{date}_ELR_v{d}.nc'):
                     all_days_exist=False
             if all_days_exist:
                 print(f"All ELR predictions already made for {country} at {accumulation}, skipping")
@@ -205,6 +244,7 @@ if __name__=='__main__':
         geometry_all = [Polygon(sf_region.shape(i).points)  for i in range(len(features)) if features[i].record[3] in [country]]
         
         region_vectorised = regionmask.Regions(geometry_all, overlap=True)
+
         
         print(f'Calculating ELR output for {accumulation} in {country}')
         for d in day:
@@ -213,15 +253,22 @@ if __name__=='__main__':
             ds = get_model_output(date, model=model, day=d)
             mask_list = region_vectorised.mask_3D(ds.rename({'longitude':'lon','latitude':'lat'}))
             mask_list = np.ma.masked_invalid(mask_list)
-            #emp_probs = np.stack([np.mean(np.squeeze(np.searchsorted([t],ds.precipitation)),axis=0)\
-            #                                      for t in [20,30,40,50]])[None,None,...]
-            #emp_probs[:,:,:,~np.squeeze(mask_list)] = np.nan
+            emp_probs = np.stack([np.mean(np.squeeze(np.searchsorted([t],ds.precipitation)),axis=0)\
+                                                  for t in [20,30,40]])[None,None,...]
+            emp_probs[:,:,:,~np.squeeze(mask_list)] = np.nan
             if county_loop:
-                full_predictions_county = np.full([1,1,4,384,352],np.nan)
+                full_predictions_county = np.full([1,1,3,384,352],np.nan)
                 if not os.path.exists(OUT_PATH+f'{accumulation}/{country}/county/'):
                     os.makedirs(OUT_PATH+f'{accumulation}/{country}/county/')
                 
                 for Location in counties_loop:
+                    _old_setstate = getattr(BSpline, "__setstate__", None)
+                    BSpline.__setstate__ = patched_setstate
+            
+                    # Hotfix: map the missing method to numpy's asarray
+                    if not hasattr(BSpline, "_asarray"):
+                        BSpline._asarray = staticmethod(np.asarray)
+
                     #print("Getting ELR predictions for", Location)
                     try:
                         geometry_all = get_geometry(Location, region_type='county', country=country)
@@ -240,27 +287,44 @@ if __name__=='__main__':
                     full_predictions_county[:,:,:,mask_full] = preds[:,:,:,mask_reg]
             
             if subcounty_loop:
-                full_predictions_subcounty = np.full([1,1,4,384,352],np.nan)
+                full_predictions_subcounty = np.full([1,1,3,384,352],np.nan)
                 
                 if not os.path.exists(OUT_PATH+f'{accumulation}/{country}/subcounty/'):
                     os.makedirs(OUT_PATH+f'{accumulation}/{country}/subcounty/')
                 with tqdm(total=len(subcounties_loop)) as pbar:
+                    _old_setstate = getattr(BSpline, "__setstate__", None)
+                    
+                    BSpline.__setstate__ = patched_setstate
+            
+                    # Hotfix: map the missing method to numpy's asarray
+                    if not hasattr(BSpline, "_asarray"):
+                        BSpline._asarray = staticmethod(np.asarray)
+
                     for Location in subcounties_loop:
                         #print("Getting ELR predictions for", Location)
                         try:
-                            geometry_all = get_geometry(Location, region_type='subcounty', country=country)
+                            if country!='Uganda':
+                                geometry_all = get_geometry(Location, region_type='subcounty', country=country)
+                                use_cluster = False
+                            else:
+                                geometry_all = None
+                                use_cluster = True
                         except:
-                            print(Location)
+                            #print(Location)
                             continue
-                        ds_sel = get_region(Location, geometry_all, ds)
+                        ds_sel = get_region(Location, geometry_all, ds, use_cluster=use_cluster)
                         checkpoint = get_model_checkpoint(Location, country, d, model)
+                        file_end = 'models'
+                        if Location in MEAN or country=='Uganda':
+                            #print("Using mean model for", Location)
+                            file_end = 'ens'
                         if model=='GAN':
                             warnings.filterwarnings('ignore', category=InconsistentVersionWarning)
                             logreg_model = joblib.load(\
-                                MODEL_PATH+f'{country}/subcounties/Region_bin_{Location}_logreg_models.pkl')['cGAN']
+                                MODEL_PATH+f'{country}/subcounties/Region_bin_{Location}_logreg_{file_end}.pkl')['cGAN']
                         else:
                             logreg_model = joblib.load(\
-                                MODEL_PATH+f'{country}/subcounties/Region_bin_{Location}_logreg_models.pkl')[model]
+                                MODEL_PATH+f'{country}/subcounties/Region_bin_{Location}_logreg_{file_end}.pkl')[model]
         
                         preds, mask_full, mask_reg = get_ELR_predictions(logreg_model, model, ds_sel, d, ds.longitude.values, ds.latitude.values, 
                                                                     Location, date,
@@ -283,14 +347,14 @@ if __name__=='__main__':
                         continue
                     else:
                         time_delta = (d*24)+6
-                        #nan_mask = np.isnan(full_predictions_subcounty)
-                        #full_predictions_subcounty[nan_mask] = emp_probs[nan_mask]
+                        nan_mask = np.isnan(full_predictions_subcounty)
+                        full_predictions_subcounty[nan_mask] = emp_probs[nan_mask]
                         ds_subcounty = xr.DataArray(full_predictions_subcounty, 
                                                     dims = ['time','fcst_valid_time','threshold','latitude','longitude'],
                                   coords = {\
                                       'time': ds.time.values,
-                                      'fcst_valid_time': ds.time.values+time_delta,
-                                      'threshold': [20,30,40,50],
+                                      'fcst_valid_time': ds.time.values+np.timedelta64(time_delta,'h'),
+                                      'threshold': [20,30,40],
                                       'latitude': np.unique(ds.latitude.values),
                                       'longitude': np.unique(ds.longitude.values),
                                   }
@@ -314,14 +378,14 @@ if __name__=='__main__':
                         continue
                     else:
                         time_delta = (d*24)+6
-                        #nan_mask = np.isnan(full_predictions_county)
-                        #full_predictions_county[nan_mask] = emp_probs[nan_mask]
+                        nan_mask = np.isnan(full_predictions_county)
+                        full_predictions_county[nan_mask] = emp_probs[nan_mask]
                         ds_county = xr.DataArray(full_predictions_county, 
                                                     dims = ['time','fcst_valid_time','threshold','latitude','longitude'],
                                   coords = {\
                                       'time': ds.time.values,
-                                      'fcst_valid_time': ds.time.values+time_delta,
-                                      'threshold': [20,30,40,50],
+                                      'fcst_valid_time': ds.time.values+np.timedelta64(time_delta,'h'),
+                                      'threshold': [20,30,40],
                                       'latitude': np.unique(ds.latitude.values),
                                       'longitude': np.unique(ds.longitude.values),
                                   }

@@ -19,9 +19,9 @@ from shapely.geometry.polygon import Polygon
 from shapely.ops import unary_union
 import shapefile
 
-country_region_type_available = {'Kenya':'subcounty','Ethiopia':'subcounty','Rwanda':'county'}
+country_region_type_available = {'Kenya':'subcounty','Ethiopia':'subcounty','Rwanda':'county','Uganda':'subcounty'}
 bounding_box = {'Ethiopia':(32.95418, 47.78942, 3.45, 14.837),'Kenya':(33.935689697, 41.5550830926, -4.559, 5.4877),
-                'Rwanda':(28.87, 30.90, -2.81, -1.151)}
+                'Rwanda':(28.87, 30.90, -2.81, -1.151),'Uganda':(29.58, 35.04, -1.44, 4.25)}
 
 def plot_exceedance(ds, country, date, day, threshold, model, 
                     save_path, probability_bins=None,clim=False):
@@ -46,8 +46,8 @@ def plot_exceedance(ds, country, date, day, threshold, model,
         ## Select sub-region and timestep to plot
         init_time = ds.time.values[0].astype('datetime64[h]').astype(object).strftime('%Y-%m-%d %H:00')
         ds_sel = ds.sel({'longitude':slice(region_extent[0],region_extent[1]),
-                         'latitude':slice(region_extent[2],region_extent[3])}).sel({'threshold':threshold,
-                                                                                    'fcst_valid_time':ds.time.values+timedelta}) 
+                         'latitude':slice(region_extent[2],region_extent[3])}).sel({'threshold':threshold}).isel({\
+                                                                                    'fcst_valid_time':0})#ds.time.values+timedelta}) 
         save_file_name = save_path+f'{model}_{date}_{day}-day_leadtime_{threshold}_mmday.png'
         
     ## need to select the country file and set other things to nan

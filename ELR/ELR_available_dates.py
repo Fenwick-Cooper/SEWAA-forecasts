@@ -10,17 +10,29 @@
 import os
 import numpy as np
 import json
+import yaml
 
 
 # The directory with the ELR predictions in
 elr_dir = "../interface/ensemble_logistic_regression/ELR_predictions/24h_accumulations/"
-country_regiontype = {"Kenya":"subcounty","Ethiopia":"subcounty","Rwanda":"county"}
+country_regiontype = {"Kenya":"subcounty","Ethiopia":"subcounty","Rwanda":"county","Uganda":"subcounty"}
+fcstyaml_path = "elr.yaml"
+with open(fcstyaml_path, "r") as f:
+    try:
+        fcst_params = yaml.safe_load(f)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+COUNTRY = fcst_params['COUNTRY']
+
+countries = ['Kenya','Ethiopia','Rwanda','Uganda']
+countries = [c for c in countries if c==COUNTRY]
 
 # Define the sort criteria
 def sortFunc(e):
     return e[0]*100*100*100*1000 + e[1]*100*100*1000 + e[2]*100*1000 + e[3]*1000;
 
-for country in ["Kenya","Ethiopia","Rwanda"]:
+for country in countries:
     elr_dir_country = elr_dir+f"{country}/{country_regiontype[country]}/"
     output_dir = elr_dir_country
     elr_years = []

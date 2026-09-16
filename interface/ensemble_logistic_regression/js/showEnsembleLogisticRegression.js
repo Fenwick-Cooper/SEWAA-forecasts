@@ -18,6 +18,9 @@ async function ELRSelect() {
 	} else if (region == "Ethiopia") {
 		width = 1130;
 		height = 860;
+	} else if (region == "Uganda") {
+		width = 630;
+		height = 656;
 	}  else if (region == "Rwanda") {
 		width = 690;
 		height = 596;
@@ -331,14 +334,17 @@ async function drawPlot(){
 	
 	let width,height;
 	if (regionName == "Kenya") {
-		width = 623; 		// Width of plot in pixels
-		height = 760;		// Height of plot in pixels
+		width = 623; 		// Width of plot in pixels  532
+		height = 760;		// Height of plot in pixels  707
 	} else if (regionName == "Ethiopia") {
-		width = 1125; 		// Width of plot in pixels
-		height = 860;		// Height of plot in pixels
+		width = 1125; 		// Width of plot in pixels  1029
+		height = 860;		// Height of plot in pixels  791
+	} else if (regionName == "Uganda") {
+		width = 619;
+		height = 615;		// XXX WRONG 554
 	} else if (regionName == "Rwanda") {
-		width = 683; 		// Width of plot in pixels
-		height = 595;		// Height of plot in pixels
+		width = 683; 		// Width of plot in pixels  570
+		height = 595;		// Height of plot in pixels  480
 	}
 	
 	// Must use await unless all of the region shape data is loaded in advance

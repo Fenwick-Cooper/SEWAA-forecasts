@@ -21,6 +21,8 @@ import regionmask
 
 from sklearn.exceptions import InconsistentVersionWarning
 import time
+import gc
+
 
 OUT_PATH = paths['OUT_PATH']
 FCST_PATH = paths['FCST_PATH']
@@ -50,6 +52,18 @@ bounding_box = {'Ethiopia':(32.95418, 47.78942, 3.45, 14.837),'Kenya':(33.935689
 
 counties = None
 subcounties = None
+
+def safe_load(path, retries=5, pause=0.5):
+    for attempt in range(retries):
+        try:
+            return joblib.load(path)
+        except OSError as e:
+            if e.errno == 24 and attempt < retries - 1:
+                gc.collect()
+                time.sleep(pause)
+            else:
+                raise
+
 
 def time_standardised_to_since_1900(times,time_delta=None):
     times_standardised = []
@@ -278,9 +292,9 @@ if __name__=='__main__':
                     checkpoint = get_model_checkpoint(Location, country, d, model)
                     if model=='GAN':
                         warnings.filterwarnings('ignore', category=InconsistentVersionWarning)
-                        logreg_model = joblib.load(MODEL_PATH+f'{country}/counties/Region_bin_{Location}_logreg_models.pkl')['cGAN']
+                        logreg_model = safe_load(MODEL_PATH+f'{country}/counties/Region_bin_{Location}_logreg_models.pkl')['cGAN']
                     else:
-                        logreg_model = joblib.load(MODEL_PATH+f'{country}/counties/Region_bin_{Location}_logreg_models.pkl')[model]
+                        logreg_model = safe_load(MODEL_PATH+f'{country}/counties/Region_bin_{Location}_logreg_models.pkl')[model]
     
                     preds, mask_full, mask_reg = get_ELR_predictions(logreg_model, model, ds_sel, d, ds.longitude.values, ds.latitude.values, 
                                                                 Location, date, OUT_PATH+f'{accumulation}/{country}/county/')
@@ -320,10 +334,10 @@ if __name__=='__main__':
                             file_end = 'ens'
                         if model=='GAN':
                             warnings.filterwarnings('ignore', category=InconsistentVersionWarning)
-                            logreg_model = joblib.load(\
+                            logreg_model = safe_load(\
                                 MODEL_PATH+f'{country}/subcounties/Region_bin_{Location}_logreg_{file_end}.pkl')['cGAN']
                         else:
-                            logreg_model = joblib.load(\
+                            logreg_model = safe_load(\
                                 MODEL_PATH+f'{country}/subcounties/Region_bin_{Location}_logreg_{file_end}.pkl')[model]
         
                         preds, mask_full, mask_reg = get_ELR_predictions(logreg_model, model, ds_sel, d, ds.longitude.values, ds.latitude.values, 

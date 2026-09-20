@@ -155,7 +155,7 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
         "stream": "eefo",
         "time": "00:00:00",
         "type": "fcmean",
-        "grid": "0.4/0.4",
+        "grid": "1/1",
     }
     #Send request
     server.execute(request, fname)

@@ -17,11 +17,12 @@ imerg_path = "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/processed_imerg_
 model_to_zip = True #whether to zip the model
 lead_times = [1,2,3] #lead times in weeks
 precip_file_str = "tprate_sfc"
-test_years = [2024,2025] #Years to test in LOYO validation, and save CRPS for
+precip_file_var = "tprate"
+test_years = np.arange(2005,2024) #Years to test in LOYO validation, and save CRPS for
 subset_regions = None  # e.g. ["Rwanda"]
-idr_training_freq = 2  # use every nth timestep for training
-force_regmean_calculation = True  # Whether to use existing regional means (if present), or recompute
-do_seasonal = False #Whether to split into seasons and train for each season separately
+idr_training_freq = 1  # use every nth timestep for training
+force_regmean_calculation = False  # Whether to use existing regional means (if present), or recompute
+do_seasonal = True #Whether to split into seasons and train for each season separately
 seasons_to_use = {
             "DJF": [12, 1, 2],
             "MAM": [3, 4, 5],
@@ -305,7 +306,7 @@ def crps_idr_xarray(predictions, obs: xr.DataArray):
 
     return xr.concat(crps_list, dim="region")
 
-def ensemble_to_features(ds: xr.Dataset, var="tprate"):
+def ensemble_to_features(ds: xr.Dataset, var="precipitation"):
     da = ds[var]
     return xr.Dataset({
         "ens_mean": da.mean(dim="number"),
@@ -413,9 +414,9 @@ def train_idr_models():
             )
             precip_ds = to_noleap(xr.load_dataset(precip_path))
             regional_means = regional_mean_from_fraction_mask(
-                precip_ds["tprate"],
+                precip_ds[precip_file_var],
                 region_mask,
-            ).to_dataset(name="tprate")
+            ).to_dataset(name="precipitation")
             regional_means.to_netcdf(regional_means_path)
         elif regional_means_path.exists():
             print(f"Regional means for lead time {str(lead)} already exist, skipping.")
@@ -423,9 +424,9 @@ def train_idr_models():
             print(f"Creating regional means for lead time {str(lead)} weeks...")
             precip_ds = to_noleap(xr.load_dataset(precip_path))
             regional_means = regional_mean_from_fraction_mask(
-                precip_ds["tprate"],
+                precip_ds[precip_file_var],
                 region_mask,
-            ).to_dataset(name="tprate")
+            ).to_dataset(name="precipitation")
             regional_means.to_netcdf(regional_means_path)
 
     # CRPS calculations
@@ -469,7 +470,7 @@ def train_idr_models():
             regional_means = regional_means.sel(time=regional_means.time.dt.month.isin(months))
 
             # Adjust season year for seasons spanning the year boundary
-            if 12 in months and 1 in months:
+            if do_seasonal and 12 in months and 1 in months:
                 year_break = next(
                     i for i in range(len(months) - 1)
                     if months[i] > months[i + 1]
@@ -504,15 +505,33 @@ def train_idr_models():
                     ),
                     dim="time",
                 ).sortby("time")
+
+                # ---------------------------------------------------------
+                # IMERG data aligned with S2S dates -- needed for IDR
+                # ---------------------------------------------------------
                 imerg_train_data = imerg_regional_means.sel(
                     time=imerg_regional_means.time.isin(s2s_train_data.time)
+                )
+
+                # ---------------------------------------------------------
+                # Full IMERG record -- used for climatology
+                # Exclude the test year for LOYO validation
+                # ---------------------------------------------------------
+                imerg_clim_train_data = imerg_regional_means.where(
+                    imerg_regional_means.time.dt.year != year,
+                    drop=True,
+                )
+
+                # If running seasonally, restrict climatology to this season
+                imerg_clim_train_data = imerg_clim_train_data.sel(
+                    time=imerg_clim_train_data.time.dt.month.isin(months)
                 )
 
                 s2s_train_feat = ensemble_to_features(s2s_train_data)
                 s2s_test_feat = ensemble_to_features(s2s_test_data)
 
                 imerg_clim_crps = crps_climatology_region(
-                    imerg_train_data.precipitation,
+                    imerg_clim_train_data.precipitation,
                     imerg_test_data.precipitation,
                 )
                 crps_clim_das.append(imerg_clim_crps)

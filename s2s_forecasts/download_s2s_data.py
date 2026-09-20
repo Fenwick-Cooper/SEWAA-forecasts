@@ -5,7 +5,7 @@ import requests
 import pandas as pd
 import numpy as np
 from ecmwfapi import ECMWFService
-import cdsapi
+# import cdsapi NOT IMPLEMENTED YET -- not in tf215gpu
 import os
 import xarray as xr
 import glob

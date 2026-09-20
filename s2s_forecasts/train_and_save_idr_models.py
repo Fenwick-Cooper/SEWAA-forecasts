@@ -1,3 +1,5 @@
+#Note, you need isodisreg python package installed -- will not work in tf215gpu conda environment
+
 import json
 import re
 from pathlib import Path

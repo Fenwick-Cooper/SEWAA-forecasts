@@ -2,54 +2,69 @@
 import os
 from pathlib import Path
 import xarray as xr
-import joblib
 import pandas as pd
 import numpy as np
 from get_idr_models import download_idr_models_oxford
+from make_s2s_regional_means import load_fraction_mask
+from local_idr import LocalIDRModel
+import re
 
-def load_idr_models(path: Path):
+def _slugify(text):
+    text = str(text).strip().lower()
+    text = re.sub(r"[,'\"]", "_", text)
+    text = re.sub(r"[^a-z0-9._-]+", "_", text)
+    text = re.sub(r"_+", "_", text).strip("_")
+    return text
+
+
+def load_idr_models(path, data_with_regions, regionmask_name=''):
     """
-    Load a serialized IDR model artifact from disk.
-
-    Parameters
-    ----------
-    path : pathlib.Path
-        Path to a joblib file containing a dictionary-like artifact with at
-        least a ``"models"`` key, and typically metadata such as ``"lead"``
-        and ``"regions"``.
-
-    Returns
-    -------
-    models : dict
-        Mapping from region name to fitted IDR model.
-    artifact : dict
-        Full loaded artifact, including models and metadata.
-
-    Raises
-    ------
-    FileNotFoundError
-        If the file does not exist or cannot be loaded.
+    Load one model per region folder, where each folder contains model_state.json.
+    Return a dict keyed by the region names from the NetCDF.
     """
-    #Make Path instance if needed
     if not isinstance(path, Path):
         path = Path(path)
-        
-    download_idr_models_oxford(OUT_FOLDER=path.parent)
+    
+    #Check if models are there and download from Oxford if not
+    download_idr_models_oxford(OUT_FOLDER=path.parent, regionmask_name=regionmask_name) 
 
-    artifact = joblib.load(path)
+    ds = data_with_regions
+    
+    if "region" not in ds.coords and "region" not in ds.dims:
+        raise KeyError(
+            f"Could not find a 'region' coordinate/dimension in {path}."
+            f"Available coords: {list(ds.coords)}; dims: {list(ds.dims)}"
+        )
 
-    models = artifact["models"]
+    region_names = ds["region"].values
+    region_names = [str(r) for r in region_names]
 
-    print(f"Loaded IDR model artifact from: {path}")
-    print(
-        "Loaded metadata: "
-        f"lead={artifact['lead']}, "
-        f"regions={artifact['regions']}"
-    )
+    model_root = path
+    folder_lookup = {
+        _slugify(p.name): p
+        for p in model_root.iterdir()
+        if p.is_dir()
+    }
 
-    return models, artifact
+    models = {}
 
-def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLDER="./s2s_data/regional_means", regionmask_name="admin1_merged_KeEtRwUg.gpkg"):
+    for region_name in region_names:
+        # print(region_name)
+        slug = _slugify(region_name)
+        region_dir = folder_lookup.get(slug)
+
+        if region_dir is None:
+            raise FileNotFoundError(
+                f"No model folder found for region '{region_name}' "
+                f"(normalized key '{slug}')."
+            )
+
+        model = LocalIDRModel.load(region_dir)
+        models[region_name] = model
+
+    return models
+
+def load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=1, IN_FOLDER="./s2s_data/regional_means", regionmask_name=""):
     """
     Load precomputed IFS regional-mean forecast data for a given initialization
     date and lead time.
@@ -149,7 +164,6 @@ def histogram(pred, bins=np.linspace(0,20,11)):
     total = counts.sum()
     if total > 0:
         counts = counts / total
-
     return counts
 
 def histogram_regions(preds_by_region, bins=np.linspace(0,20,11)):
@@ -347,14 +361,15 @@ def produce_s2s_idr_forecasts(
     #Iterate through lead times, loading models and data, generating predictions, and saving outputs
     for lead in lead_times_weeks:
         print(f"Processing lead time {lead} weeks...")
-        idr_models_name = f'idr_models_{regionmask_name.split(".")[0]}_{lead}wklead.joblib'
+        idr_models_name = f'idr_models_{regionmask_name.split(".")[0]}_{lead}wklead'
 
         #Load IDR model and regional mean data for this date and lead time
         print(f"Processing forecast for {year}-{month:02d}-{day:02d} with lead time {lead} weeks...")
-        models, _ = load_idr_models(os.path.join(IDR_MODEL_FOLDER, idr_models_name))
-        print(f"Loaded IDR models for lead time {lead} weeks.")
         data = load_ifs_onelead_regional_mean(year, month, day, lead_times_weeks=lead, IN_FOLDER=REGIONAL_MEAN_FOLDER, regionmask_name=regionmask_name)
         print(f"Loaded IFS regional mean data for lead time {lead} weeks.")
+        models = load_idr_models(os.path.join(IDR_MODEL_FOLDER, idr_models_name), data, regionmask_name)
+        print(f"Loaded IDR models for lead time {lead} weeks.")
+
         
         #Run prediction
         preds = predict_idr_xarray(models, data)
@@ -366,7 +381,7 @@ def produce_s2s_idr_forecasts(
         hist = histogram_regions(
             preds,
             bins=bins
-        )
+            )
         print(f"Produced histogram of IDR predictions for lead time {lead} weeks.")
 
         hist = hist.assign_coords(
@@ -394,7 +409,7 @@ def produce_s2s_idr_forecasts(
         #save to netcdf
         os.makedirs(OUT_FOLDER, exist_ok=True)
         hist.to_netcdf(os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc"))
-        print(f"Saved histogram for lead time {lead} weeks to: {OUT_FOLDER}/{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc")
+        print(f"Saved histogram for lead time {lead} weeks to: {OUT_FOLDER}/{year}/{year}-{month:02d}-{day:02d}_histogram_{regionmask_name.split('.')[0]}_{lead}wklead.nc")
 
         #QUANTILES CURRENTLY NOT NEEDED
         #Produce quantiles of predictions for this lead time and save to netcdf

@@ -5,7 +5,7 @@ import shutil
 import requests
 
 
-def idr_models_available(OUT_FOLDER="./idr_models", required_files=None):
+def idr_models_available(OUT_FOLDER="./idr_models", regionmask_name=''):
     """
     Check whether the idr_models folder contains the expected model files.
 
@@ -26,15 +26,15 @@ def idr_models_available(OUT_FOLDER="./idr_models", required_files=None):
 
     if not out_dir.exists():
         return False
+    
+    folders = [
+        f"idr_models_{regionmask_name.split('.')[0]}_{i}wklead" for i in [1,2,3]
+    ]
 
-    if required_files is not None:
-        return all((out_dir / fname).exists() for fname in required_files)
-
-    # Default check: any joblib file in the folder
-    return any(out_dir.glob("*.joblib"))
+    return all((out_dir / folder).exists() for folder in folders)
 
 
-def download_idr_models_oxford(OUT_FOLDER="./idr_models"):
+def download_idr_models_oxford(OUT_FOLDER="./idr_models", regionmask_name=''):
     """
     Download the idr_models zip from the Oxford web server and unzip it into OUT_FOLDER
     if the model files are not already present.
@@ -53,7 +53,7 @@ def download_idr_models_oxford(OUT_FOLDER="./idr_models"):
     out_dir = Path(OUT_FOLDER)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    if idr_models_available(OUT_FOLDER=out_dir):
+    if idr_models_available(OUT_FOLDER=out_dir, regionmask_name=regionmask_name):
         print(f"Model files already found in {out_dir}. Nothing to download.")
         return
 
@@ -90,4 +90,11 @@ def download_idr_models_oxford(OUT_FOLDER="./idr_models"):
         print(zip_path)
         zip_path.unlink(missing_ok=True)
 
-    print("Done.")
+    print("Download done.")
+
+    if idr_models_available(OUT_FOLDER=out_dir, regionmask_name=regionmask_name):
+        print(f"Model files downloaded and found in {out_dir}.")
+        return
+    else:
+        print(f"Model files were not downloaded successfully. Try again later or check paths.")
+        return

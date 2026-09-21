@@ -12,6 +12,8 @@ import xarray as xr
 import glob
 import argparse
 from pathlib import Path
+import pandas as pd
+import cdsapi
 
 OUT_FOLDER = "/nf2/web/rain/ICPAC/operational/s2s_forecasts/s2s_forecast_data"
 
@@ -167,7 +169,7 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
         "stream": "eefo",
         "time": "00:00:00",
         "type": "fcmean",
-        "grid": "0.4/0.4",
+        "grid": "1/1",
     }
     #Send request
     server.execute(request, fname)
@@ -204,6 +206,8 @@ def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=Tru
     -------
     None
     """
+    os.makedirs(OUT_FOLDER, exist_ok=True)
+
     #Open GRIB file with xarray
     fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tprate.grib")
     try:

@@ -124,7 +124,7 @@ def make_regional_means(year, month, day, lead_times_weeks=[1,2,3], IN_FOLDER=".
         fname = os.path.join(IN_FOLDER, f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc")
         try:
             print(f"Processing file: {fname}")
-            ds = xr.open_dataset(fname)
+            ds = xr.open_dataset(fname, decode_timedelta=True)
         except Exception as e:
             print(f"Error opening file {fname}: {e}. Please check download was successful and file is not corrupted.")
             continue

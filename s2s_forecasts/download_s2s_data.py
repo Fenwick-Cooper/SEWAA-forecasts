@@ -5,9 +5,11 @@ import requests
 import pandas as pd
 import numpy as np
 from ecmwfapi import ECMWFService
+# import cdsapi NOT IMPLEMENTED YET -- not in tf215gpu
 import os
 import xarray as xr
 import glob
+from pathlib import Path
 
 
 def sort_lat_lon(ds):
@@ -43,7 +45,7 @@ def sort_lat_lon(ds):
 
     return ds
 
-def calculate_steps(lead_times_weeks):
+def calculate_steps(lead_times_weeks, data_source='MARS'):
     """
     Build ECMWF step ranges for the requested lead weeks.
 
@@ -60,11 +62,16 @@ def calculate_steps(lead_times_weeks):
     str
         ECMWF step string such as '0-168/168-336/336-504'.
     """
-    steps = str()
-    for lead in lead_times_weeks:
-        steps += f"{168*(lead-1)}-{168*lead}/"
-    steps = steps[:-1]  # Remove trailing slash
-    
+    if data_source=='MARS':
+        steps = str()
+        for lead in lead_times_weeks:
+            steps += f"{168*(lead-1)}-{168*lead}/"
+        steps = steps[:-1]  # Remove trailing slash
+    elif data_source=='Open':
+        steps = list()
+        for lead in lead_times_weeks:
+            steps.append(str(168*lead))
+
     return steps
 
 def delete_grib_and_index(fname):
@@ -91,6 +98,18 @@ def delete_grib_and_index(fname):
             print("Deleted index file: ", path)
         except Exception as e:
             print(f"Error deleting file {path}: {e}")
+
+def check_if_processed_data_exists(year, month, day, lead_times_weeks=[1,2,3], folder_to_check='./s2s_data/processed'):
+    
+    if not isinstance(folder_to_check, Path):
+        folder_to_check = Path(folder_to_check)
+    
+    fnames = [
+        f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc" for week in lead_times_weeks
+    ]
+
+    return all((folder_to_check / fname).exists() for fname in fnames)
+
 
 def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLDER="./s2s_data"):
     """
@@ -122,7 +141,7 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
     os.makedirs(OUT_FOLDER, exist_ok=True)
 
     #Calculate step string
-    steps = calculate_steps(lead_times_weeks)
+    steps = calculate_steps(lead_times_weeks, data_source='MARS')
 
     #Build MARS request in correct format for ECMWF API
     request = {
@@ -136,7 +155,7 @@ def download_s2s_data_ecmwf(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLD
         "stream": "eefo",
         "time": "00:00:00",
         "type": "fcmean",
-        "grid": "0.4/0.4",
+        "grid": "1/1",
     }
     #Send request
     server.execute(request, fname)
@@ -172,9 +191,14 @@ def download_s2s_data_oxford(year, month, day, lead_times_weeks=[1,2,3], OUT_FOL
     
     os.makedirs(OUT_FOLDER, exist_ok=True)
 
+    if not isinstance(OUT_FOLDER, Path):
+        OUT_FOLDER = Path(OUT_FOLDER)
+
     for week in lead_times_weeks:
         fname = f"{year}-{month:02d}-{day:02d}_tp_meanstd_{week}wklead.nc"
         file_URL = f"{server}/{year}/{fname}"
+        if (OUT_FOLDER / fname).exists():
+            f"File already downloaded to {OUT_FOLDER}. Continuing..."
 
         print(f"Checking University of Oxford for {fname}")
         try:
@@ -197,8 +221,34 @@ def download_s2s_data_oxford(year, month, day, lead_times_weeks=[1,2,3], OUT_FOL
         else:
             print(f"Unable to copy {fname} from {file_URL}. HTTP error {r.status_code}. Make sure the data is available")
 
+def download_s2s_data_open(year, month, day, lead_times_weeks=[1,2,3], OUT_FOLDER="./s2s_data"):
 
-def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=True, IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data"):
+    target = os.path.join(OUT_FOLDER, f"{year}-{month:02d}-{day:02d}_tprate.grib")
+    #Check path exists and make if not
+    os.makedirs(OUT_FOLDER, exist_ok=True)
+
+    steps = calculate_steps(lead_times_weeks=lead_times_weeks, data_source='Open')
+
+    dataset = "s2s-forecasts"
+    request = {
+        "origin": "ecmwf",
+        "year": str(year),
+        "month": str(month).zfill(2),
+        "day": str(day).zfill(2),
+        "time": "00:00",
+        "level_type": "single_level",
+        "variable": ["total_precipitation"],
+        "forecast_type": "perturbed_forecast",
+        "leadtime_hour": steps,
+        "data_format": "grib"
+    }
+
+    client = cdsapi.Client()
+    client.retrieve(dataset, request, target)
+    f"Downloaded data from ECMWF open data for date {year}-{month:02d}-{day:02d}"
+
+
+def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=True, IN_FOLDER="./s2s_data", OUT_FOLDER="./s2s_data", data_source='MARS'):
     """
     Process downloaded ECMWF S2S GRIB data into weekly NetCDF files.
 
@@ -237,13 +287,26 @@ def process_s2s_data(year, month, day, lead_times_weeks=[1,2,3], delete_grib=Tru
 
     #Tidy latitude/longitude and convert units
     ds = sort_lat_lon(ds) 
-    ds = ds*3600*168 #Convert to m/week from m/s
-    ds = ds*1000 #Convert to mm/week from m/week
+
+    if data_source=='MARS':
+        ds = ds*3600*168 #Convert to m/week from m/s
+        ds = ds*1000 #Convert to mm/week from m/week
+        var_name = "tprate"
+    elif data_source=='Open':
+        ds = xr.concat( #Convert from accumluated values to values per week
+            [
+                ds.isel(step=slice(0,1)),
+                ds.diff("step")
+            ],
+            dim="step"
+        )
+        ds = ds*1000 #Convert from m to mm
+        var_name = "tp"
 
     for i, week in enumerate(lead_times_weeks):
         ds_week = ds.isel(step=i) #Select the correct step for this lead week. This assumes the steps are in the same order as the lead_times_weeks list, which should be true if the request is built correctly.
-        ds_week_mean = ds_week.mean('number').rename({'tprate': 'tp_mean'}) #Renaming variable to avoid confusion with std
-        ds_week_mean['tp_std'] = ds_week.std('number').tprate #Calculate std across ensemble members and add as new variable in same dataset
+        ds_week_mean = ds_week.mean('number').rename({var_name: 'tp_mean'}) #Renaming variable to avoid confusion with std
+        ds_week_mean['tp_std'] = ds_week.std('number')[var_name] #Calculate std across ensemble members and add as new variable in same dataset
         ds_week_mean.attrs['units'] = 'mm/week'
         ds_week_mean["valid_time"] = ds_week_mean["valid_time"] - pd.Timedelta(days=7) #Change valid_time convention to be start of accumulation period, not end
         ds_week_mean["step"] = ds_week_mean["step"] - pd.Timedelta(days=7) #Change step convention to be start of accumulation period, not end
@@ -295,20 +358,24 @@ def download_and_process_s2s_data(year, month, day, data_source='Oxford', lead_t
     ValueError
         If data_source is not one of the supported options.
     """
-    print("Starting download and processing of S2S data for date: ", f"{year}-{month:02d}-{day:02d}")
-    
-    if data_source == 'Oxford':
-        #Download proccsed data from Oxford S2S database -- no need to process as data in the Oxford database
-        # is already processed
-        download_s2s_data_oxford(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=PROC_FOLDER)
-    elif data_source in ['ECMWF', 'MARS', 'ECMWFAPI']:
-        #Download directly from ECMWF API and process
-        download_s2s_data_ecmwf(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
-        process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
-    elif data_source in ['ECMWFOpen', 'OpenData', 'Open Data', 'open data']:
-        #TO DO -- enable support for accessing 1.5 degree data from ECMWF open data
-        raise ValueError(f"Data source {data_source} not yet supported -- to be supported in future update")
-        #download_s2s_data_open(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
-        # process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER)
+    #Check if processed data already exists
+    print(f"Checking if processed data already exists in {PROC_FOLDER}")
+    if check_if_processed_data_exists(year, month, day, lead_times_weeks=lead_times_weeks, folder_to_check=PROC_FOLDER):
+        f"Processed data already exists in {PROC_FOLDER}"
+        return
+
+    #If it does not, download:
     else:
-        raise ValueError(f"Invalid data source: {data_source}. Supported sources are 'Oxford' and 'ECMWF'.")
+        print("Processed data not there. Starting download and processing of S2S data for date: ", f"{year}-{month:02d}-{day:02d}")
+        if data_source == 'Oxford':
+            #Download proccsed data from Oxford S2S database
+            download_s2s_data_oxford(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=PROC_FOLDER)
+        elif data_source == 'ECMWF':
+            #Download directly from ECMWF API and process
+            download_s2s_data_ecmwf(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
+            process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER, data_source='MARS')
+        elif data_source in ['ECMWFOpen', 'OpenData', 'Open Data', 'open data']:
+            download_s2s_data_open(year, month, day, lead_times_weeks=lead_times_weeks, OUT_FOLDER=RAW_FOLDER)
+            process_s2s_data(year, month, day, lead_times_weeks=lead_times_weeks, delete_grib=delete_grib, IN_FOLDER=RAW_FOLDER, OUT_FOLDER=PROC_FOLDER, data_source='Open')
+        else:
+            raise ValueError(f"Invalid data source: {data_source}. Supported sources are 'Oxford' and 'ECMWF'.")

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7 day rain</title>
+</head>
+<body>
+
+<h2>7 day rainfall accumulation forecasts</h2>
+
+<p>
+	Model:
+	<span id="modelInfo">
+	: The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a> 
+	<a href="https://www.ecmwf.int/en/forecasts/about-our-forecasts/sub-seasonal-range-forecasts" target="_blank">
+	ECWMF IFS sub-seasonal range forecast</a>  at 1 degree resolution is aggregated to weekly mean regional means at the admin 1 level (some small regions are merged), then post-processed using
+	<a href="https://arxiv.org/pdf/1909.03725" target="_blank">
+	isotonic distributional regression (IDR)</a> trained on <a href="https://gpm.nasa.gov/data/imerg" target="_blank"> IMERG</a>
+	v7 to produce forecasts of 7d rainfall intervals. Model version 1. Trained on all hindcasts from 2004-2025 inclusive.
+	</span>
+	</p>
+
+<p>
+Region:
+<select id="regionSelect" onchange="regionSelect()">
+	<optgroup label="Ethiopia">
+	  <option value="Amhara">Amhara</option>
+	  <option value="Beneshangul Gumu">Beneshangul Gumu</option>
+	  <option value="Oromia, Addis Ababa & Hareri">Oromia, Addis Ababa & Hareri</option>
+	  <option value="Somali & Dire Dawa">Somali & Dire Dawa</option>
+	  <option value="Gambela & SNNPR">Gambela & SNNPR</option>
+	  <option value="Afar & Tigray">Afar & Tigray</option>
+	</optgroup>
+  
+	<optgroup label="Kenya">
+	  <option value="Marsabit">Marsabit</option>
+	  <option value="Mandera">Mandera</option>
+	  <option value="Wajir">Wajir</option>
+	  <option value="Samburu">Samburu</option>
+	  <option value="Isiolo">Isiolo</option>
+	  <option value="Kajiado">Kajiado</option>
+	  <option value='Tana River, Kilifi & Mombasa'>Tana River, Kilifi & Mombasa</option>
+	  <option value="Garissa & Lamu">Garissa & Lamu</option>
+	  <option value='Turkana, Trans Nzoia & West Pokot'>Turkana, Trans Nzoia & West Pokot</option>
+	  <option value="Western Kenya">Western Kenya</option>
+	  <option value="Central Kenya including Nairobi">Central Kenya including Nairobi</option>
+	  <option value="Kwale & Taita Taveta">Kwale & Taita Taveta</option>
+	</optgroup>
+  
+	<optgroup label="Rwanda">
+	  <option value="Rwanda">Rwanda</option>
+	</optgroup>
+  
+	<optgroup label="Uganda">
+	  <option value="Northern Region">Northern Region</option>
+	  <option value="Eastern Region">Eastern Region</option>
+	  <option value="Central Region">Central Region</option>
+	  <option value="Western Region">Western Region</option>
+	</optgroup>
+  </select>
+
+Initialisation:
+<select id="initYearSelect" onchange="initTimeSelect()" title="Forecast initialisation year"></select>
+<select id="initMonthSelect" onchange="initTimeSelect()" title="Forecast initialisation month"></select>
+<select id="initDaySelect" onchange="initTimeSelect()" title="Forecast initialisation day"></select>
+
+Valid:
+<select id="validTimeSelect" onchange="validTimeSelect()" title="Start of the time we are forecasting">
+</select>
+
+Value threshold:
+<input type="text" id="thresholdValueSelect" size="6"
+	title="Show the chance of rainfall above this value" onblur="pValueThresholdInput()">
+<span id="unitsDescription">mm/week</span>.
+
+Probability threshold:
+<input type="text" id="thresholdProbabilitySelect" size="3"
+	title="Change this number and look at the plot description" onblur="pProbabilityThresholdInput()">
+%.
+
+</p>
+
+<p id="statusText"> Status </p>
+
+<!-- 
+<style>
+	#mapImage {
+	  display: block;
+	  margin: 20px 0 0;
+	  width: 650px;
+	  height: auto;
+	}
+  </style>
+ -->
+<img id="mapImage" src="figures/regions_for_s2s.png" alt="Regions to which histograms refer">
+
+<script src="../js/plotForecastsMin.js"></script>
+<script src="../js/s2sCounts.js"></script>
+<script src="../js/S2S.js"></script>
+</body>
+</html>

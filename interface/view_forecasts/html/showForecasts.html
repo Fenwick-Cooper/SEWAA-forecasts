@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>East African rainfall</title>
 </head>
 <body>
@@ -15,8 +14,10 @@ East African rainfall forecasts.
 <p>
 Model:
 <select id="modelSelect" onchange="modelSelect()">
-	<option value="6h accumulation">6h accumulation</option>
-    <option value="24h accumulation">24h accumulation</option>
+    <option value="IFS 6h" disabled>IFS 6h</option>
+    <option value="IFS 24h" disabled>IFS 24h</option>
+	<option value="IFS+cGAN 6h" selected>IFS+cGAN 6h</option>
+    <option value="IFS+cGAN 24h">IFS+cGAN 24h</option>
 </select>
 <span id="modelInfo">
 : The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a> 
@@ -26,6 +27,34 @@ IFS</a> output is post-processed using
 cGAN</a> trained on <a href="https://gpm.nasa.gov/data/imerg" target="_blank"> IMERG</a>
 v6 to produce forecasts of 6h rainfall intervals. Model version 1.
 </span>
+</p>
+
+<p id="chooseVariable" style="display:none;">
+    Variable: 
+    <select id="variableSelect" onchange="variableSelect()">
+        <option value="cp">Convective precipitation</option>
+        <option value="mcc">Medium cloud cover</option>
+        <option value="mucape" disabled>Most unstable CAPE</option>
+        <option value="sp">Surface pressure anomaly</option>
+        <option value="t2m">Two metre temperature</option>
+        <option value="t2m_anom" disabled>Two metre temperature anomaly</option>
+        <option value="tciw">Total column ice water</option>
+        <option value="tclw">Total column liquid water</option>
+        <option value="tcrw">Total column rain water</option>
+        <option value="tcw">Total column water</option>
+        <option value="tcw_anom" disabled>Total column water anomaly</option>
+        <option value="tcwv">Total column water vapour</option>
+        <option value="tcwv_anom" disabled>Total column water vapour anomaly</option>
+        <option value="tp" selected>Total precipitation</option>
+        <option value="u10">10m zonal wind</option>
+        <option value="v10">10m meridional wind</option>
+        <option value="wind_speed_10m">10m wind speed</option>
+        <option value="wind_speed_10m_anom" disabled>10m wind speed anomaly</option>
+        <option value="u700">700 hPa zonal wind</option>
+        <option value="v700">700 hPa meridional wind</option>
+        <option value="wind_speed_700hPa" disabled>700 hPa wind speed</option>
+        <option value="wind_speed_700hPa_anom" disabled>700 hPa wind speed anomaly</option>
+    </select>
 </p>
 
 <p>
@@ -45,28 +74,22 @@ Region:
     <option value="Uganda">Uganda</option>
 </select>
 
-Initialisation:
+<select id="initialisationSelect" onchange="initialisationSelect()">
+	<option value="initialisationDate">Initialisation:</option>
+    <option value="validDate">Valid:</option>
+</select>
+
 <select id="initYearSelect" onchange="initTimeSelect()" title="Forecast initialisation year"></select>
 <select id="initMonthSelect" onchange="initTimeSelect()" title="Forecast initialisation month"></select>
 <select id="initDaySelect" onchange="initTimeSelect()" title="Forecast initialisation day"></select>
 <select id="initTimeSelect" onchange="initTimeSelect()" title="Forecast initialisation time"></select>
 
-Valid:
+<span id="initialisationOrValidText">Valid:</span>
 <select id="validTimeSelect" onchange="validTimeSelect()" title="Start of the time we are forecasting">
 	<option value="All">Plot all valid times</option>
 </select>
 
-Style:
-<select id="styleSelect" onchange="styleSelect()">
-	<option value="Default">Default</option>
-	<option value="ICPAC">ICPAC</option>
-    <option value="KMD">KMD</option>
-    <option value="EMI">EMI</option>
-    <option value="ECMWF">ECMWF</option>
-    <option value="ECMWF2">ECMWF 2</option>
-    <option value="ECMWF-EFI">ECMWF-EFI</option>
-    <option value="ECMWF-ECPOINT">ECMWF-ECPOINT</option>
-</select>
+Style: <select id="styleSelect" onchange="styleSelect()"></select>
 </p>
 
 <p>
@@ -82,6 +105,8 @@ Value threshold:
 <input type="text" id="thresholdValueSelect" size="6"
 	title="Show the chance of rainfall above this value" onblur="pValueThresholdInput()">
 <span id="unitsDescription">mm/h</span>.
+<input type="checkbox" id="absoluteThresholdValue" onclick="absoluteVThresholdValueCheck()" style="display:none;">
+<span id="absoluteVThresholdValueText" style="display:none;">Absolute value.</span>
 <select id="percentagesSelect" onchange="percentagesSelect()" disabled>
 	<option value="Percentages">Show percentages</option>
 	<option value="Words">Show words</option>
@@ -111,7 +136,6 @@ Units:
 <div id="mapExplanationText" style="display:none;">
 Some text to explain the current plots.
 <br><br></div>
-
 
 <script src="../js/plotForecastsMin.js"></script>
 <script src="../js/testScript.js"></script>

@@ -1,14 +1,14 @@
 // Models were: "Jurre brishti", "Muva kubwa"
-// Models: "6h accumulation", "24h accumulation"
-let modelName = "6h accumulation"
+// Models: "IFS+cGAN 6h accumulation", "IFS+cGAN 24h accumulation"
+let modelName = "IFS+cGAN 6h"
 // Regions: Burundi, Djibouti, Eritrea, Ethiopia, Kenya, Rwanda, Somalia, South Sudan,
 //          Sudan, Tanzania, Uganda, ICPAC, East Africa, All.
 let regionName = "East Africa";
 let units = "mm/6h";			// Can be mm/h, mm/6h, mm/day, mm/week
-let style = "Default";			// Can be "Default", "ICPAC", "KMD", "EMI", "ECMWF".
+let style = "Default";			// Can be "Default", "ICPAC", "KMSA", "EMI", "ECMWF".
 let plotType="Probability";		// Can be "Probability", "Values", "Mean" or "Std".
 let showPercentages = true;		// On the colour scale
-let maxRain = 1/24;				// Rainfall threshold in mm/h
+let valueThreshold = 1/24;		// Rainfall threshold in mm/h
 let probability = 0.95;			// Between 0 and 1
 
 let drawMarker = false;			// Draw the marker corresponding to the histogram location
@@ -24,28 +24,370 @@ let canvasMouseDownRects = [];
 // Hack to force reloading of dates files
 let dateLoadNumber = Math.floor(Math.random() * 10000);
 
-let availableDates;				// An object containing the dates we can use
+let availableDates;				// An object containing the initialisation dates we can use
+let validDates;					// An object containing the valid dates we can use
 let GANForecast = [];			// An array of countsData objects
-
 let validTimes = [];			// An array of valid times, set in updateDateMenus
 
+// Create array of objects that contains all of the units
+// XXX Normalisation is not currently used in the function getPlotNormalisation but the
+//     plan is that it will be in future.
+const variableInfoAll = [{
+		name: "cp",
+		longName: "Convective precipitation",
+		units: ["mm/h","mm/6h","mm/day"],
+		norm: [1,6,24],
+		accumulated: true,
+		absThresholdValue: false,
+		defaultThreshold: 1/24
+	},{
+		name: "mcc",
+		longName: "Medium cloud cover",
+		units: ["%"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 50
+	},{
+		name: "mucape",
+		longName: "Most unstable CAPE",
+		units: ["J/kg"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 1
+	},{
+		name: "sp",
+		longName: "Surface pressure anomaly",
+		units: ["hPa"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 3
+	},{
+		name: "t2m",
+		longName: "Two metre temperature",
+		units: ["Degrees Celcius"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 20
+	},{
+		name: "t2m_anom",
+		longName: "Two metre temperature anomaly",
+		units: ["Degrees Celcius"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 0
+	},{
+		name: "tciw",
+		longName: "Total column ice water",
+		units: ["g/m^2"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 1
+	},{
+		name: "tclw",
+		longName: "Total column liquid water",
+		units: ["g/m^2"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 1
+	},{
+		name: "tcrw",
+		longName: "Total column rain water",
+		units: ["g/m^2"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 1
+	},{
+		name: "tcw",
+		longName: "Total column water",
+		units: ["kg/m^2"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 1
+	},{
+		name: "tcw_anom",
+		longName: "Total column water anomaly",
+		units: ["kg/m^2"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 0
+	},{
+		name: "tcwv",
+		longName: "Total column water vapour",
+		units: ["kg/m^2"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 1
+	},{
+		name: "tcwv_anom",
+		longName: "Total column water vapour anomaly",
+		units: ["kg/m^2"],
+		norm: [1],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 1
+	},{
+		name: "tp",
+		longName: "Total precipitation",
+		units: ["mm/h","mm/6h","mm/day"],
+		norm: [1,6,24],
+		accumulated: true,
+		absThresholdValue: false,
+		defaultThreshold: 1/24
+	},{
+		name: "u10",
+		longName: "10m zonal wind",
+		units: ["km/h","m/s","mph"],
+		norm: [1,0.27777778,0.6213712],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 1
+	},{
+		name: "v10",
+		longName: "10m meridional wind",
+		units: ["km/h","m/s","mph"],
+		norm: [1,0.27777778,0.6213712],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 1
+	},{
+		name: "wind_speed_10m",
+		longName: "10m wind speed",
+		units: ["km/h","m/s","mph"],
+		norm: [1,0.27777778,0.6213712],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 1
+	},{
+		name: "wind_speed_10m_anom",
+		longName: "10m wind speed anomaly",
+		units: ["km/h","m/s","mph"],
+		norm: [1,0.27777778,0.6213712],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 0
+	},{
+		name: "u700",
+		longName: "700 hPa zonal wind",
+		units: ["km/h","m/s","mph"],
+		norm: [1,0.27777778,0.6213712],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 1
+	},{
+		name: "v700",
+		longName: "700 hPa meridional wind",
+		units: ["km/h","m/s","mph"],
+		norm: [1,0.27777778,0.6213712],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 1
+	},{
+		name: "wind_speed_700hPa",
+		longName: "700 hPa wind speed",
+		units: ["km/h","m/s","mph"],
+		norm: [1,0.27777778,0.6213712],
+		accumulated: false,
+		absThresholdValue: false,
+		defaultThreshold: 0
+	},{
+		name: "wind_speed_700hPa_anom",
+		longName: "700 hPa wind speed anomaly",
+		units: ["km/h","m/s","mph"],
+		norm: [1,0.27777778,0.6213712],
+		accumulated: false,
+		absThresholdValue: true,
+		defaultThreshold: 0
+	}
+];
+
+// There is only rainfall
+const rainfallInfo = {
+	name: "Rain",
+	longName: "Rainfall",
+	units: ["mm/h","mm/6h","mm/day"],
+	norm: [1,6,24],
+	accumulated: true,
+	zeroClamp: true,
+	defaultThreshold: 1/24
+}
+
+// When there is a choice of units, what is it?
+let precipUnits = "mm/6h";
+let speedUnits = "km/h";
+
+// When there is a choice of styles, what is it?
+let precipPlotStyle = style;
 
 // Called by the modelSelect menu
 async function modelSelect() {
 	modelName = document.getElementById("modelSelect").value;
 	
-	// Set the model description
-	if (modelName == "6h accumulation") {
-		document.getElementById("modelInfo").innerHTML = "The <a href=\"https://www.ecmwf.int/\" target=\"_blank\">ECMWF</a> <a href=\"https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS\" target=\"_blank\">IFS</a> output is post-processed using <a href=\"https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120\" target=\"_blank\">cGAN</a> trained on <a href=\"https://gpm.nasa.gov/data/imerg\" target=\"_blank\"> IMERG</a> v6 from 2018 and 2019 to produce forecasts of 6h rainfall intervals. Model version 1.";
 	
-	} else if (modelName == "24h accumulation") {
-		document.getElementById("modelInfo").innerHTML = "The <a href=\"https://www.ecmwf.int/\" target=\"_blank\">ECMWF</a> <a href=\"https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS\" target=\"_blank\">IFS</a> output is post-processed using <a href=\"https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120\" target=\"_blank\">cGAN</a> trained on <a href=\"https://gpm.nasa.gov/data/imerg\" target=\"_blank\"> IMERG</a> v7 from 2018, 2019, 2020 and 2021 to produce forecasts of 24h rainfall intervals. Model version 2.";
+	if ((modelName == "IFS 6h") || (modelName == "IFS 24h")) {
+		// Set the model description
+		document.getElementById("modelInfo").innerHTML =
+			`: The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a>
+			 <a href="https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS"
+			  target="_blank">IFS</a> output without post-processing.`
+		
+		// Enable the variable menu
+		document.getElementById("chooseVariable").style.display = "inline";	// Show the paragraph
 
+	} else if (modelName == "IFS+cGAN 6h") {
+		// Set the model description
+		document.getElementById("modelInfo").innerHTML =
+			`: The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a>
+			 <a href="https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS"
+			  target="_blank">IFS</a> output is post-processed using
+			 <a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120"
+			  target="_blank">cGAN</a> trained on
+			 <a href="https://gpm.nasa.gov/data/imerg" target="_blank"> IMERG</a> v6 from
+			 2018 and 2019 to produce forecasts of 6h rainfall intervals. Model version 1.`;
+
+		// Hide the variable choice menu
+		document.getElementById("chooseVariable").style.display = "none";	// Hide the paragraph
+	
+	} else if (modelName == "IFS+cGAN 24h") {
+		// Set the model description
+		document.getElementById("modelInfo").innerHTML = 
+			`: The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a>
+			 <a href="https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS"
+			  target="_blank">IFS</a> output is post-processed using
+			 <a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120"
+			  target="_blank">cGAN</a> trained on
+			 <a href="https://gpm.nasa.gov/data/imerg" target="_blank"> IMERG</a> v7 from
+			 2018, 2019, 2020 and 2021 to produce forecasts of 24h rainfall intervals.
+			 Model version 2.`;
+		
+		// Hide the variable choice menu
+		document.getElementById("chooseVariable").style.display = "none";	// Hide the paragraph
 	}
-	await loadDates();		// Each model has it's own set of available dates
+
+	updateUnitsSelectMenu();
+	restoreValueThreshold();
+	updateStyleSelectMenu();
+	await loadDates();			// Each model has it's own set of available dates
 	await loadForecast();		// Load the currently selected forecast
-	drawMarker = false;	// No longer draw the histograms
+	drawMarker = false;			// No longer draw the histograms
 	document.getElementById("removeHistBttn").style.display = "none";	// Hide the button
+	drawPlots();
+}
+
+// Returns the current variableInfo or rainfallInfo
+function getVariableInfo() {
+
+	// If there is no variable select menu, the variable in use is Rain
+	let variableIsRain = (document.getElementById("chooseVariable").style.display == "none");
+
+	// Which variable are we selecting
+	let variableName;
+	if (variableIsRain) {
+		variableName = "Rain";
+	} else {
+		variableName = document.getElementById("variableSelect").value;
+	}
+
+	// Get the variableInfo object
+	let variable;
+	if (variableIsRain) {
+		variable = rainfallInfo;
+	} else {
+		variable = variableInfoAll.find(function(variable) {
+			return variable.name === variableName;
+		});
+	}
+
+	return variable;
+}
+
+// The variable has changed.
+// Restore the valueThreshold global to that associated with the current variable.
+function restoreValueThreshold() {
+
+	// Get the unitsSelect menu's value
+	units = document.getElementById("unitsSelect").value;
+
+	// Restore the value threshold
+	let variable = getVariableInfo();
+	valueThreshold = variable.currentThreshold;
+
+	// Update the value threshold to display in the current units
+	let norm = getPlotNormalisation(units);
+	document.getElementById("thresholdValueSelect").value = roundSF(valueThreshold * norm, 3);
+	// Also store the full value
+	document.getElementById("thresholdValueSelect").dataset.valueThreshold = valueThreshold;
+
+	// Check if the distribution can be negative
+	if (variable.absThresholdValue) {
+		// Display the absolute value check box
+		document.getElementById("absoluteThresholdValue").style.display = "inline";
+		document.getElementById("absoluteVThresholdValueText").style.display = "inline";
+		
+		// The first time here checked is the default
+		if (variable.absThresholdValueChecked === undefined) {
+			variable.absThresholdValueChecked = true;
+		}
+		// Check the absolute threshold value box
+		document.getElementById("absoluteThresholdValue").checked = variable.absThresholdValueChecked;
+	} else {
+		// Hide the absolute value check box
+		document.getElementById("absoluteThresholdValue").style.display = "none";
+		document.getElementById("absoluteVThresholdValueText").style.display = "none";
+	}
+}
+
+// The available units in the unitsSelect menu depend upon the variable we are looking at
+function updateUnitsSelectMenu() {
+
+	// The units select menu
+	let unitsSelectMenu = document.getElementById("unitsSelect");
+
+	// Remove all of the current menu items
+	while (unitsSelectMenu.hasChildNodes()) {
+		unitsSelectMenu.removeChild(unitsSelectMenu.firstChild);
+	}
+
+	// Which variable do we have selected
+	let variable = getVariableInfo();
+
+	// Add the menu items
+	for (i=0;i<variable.units.length;i++) {
+		let option = document.createElement("option");
+		option.value = variable.units[i];
+		option.innerHTML = variable.units[i];
+		unitsSelectMenu.appendChild(option);
+	}
+
+	// If appropriate, restore the previously in use units
+	if ((variable.name == "Rain") || (variable.name == "cp") || (variable.name == "tp")) {
+		unitsSelectMenu.value = precipUnits;
+	} else if ((variable.name == "u10") || (variable.name == "v10") ||
+			   (variable.name == "wind_speed_10m") ||
+			   (variable.name == "u700") || (variable.name == "v700")) {
+		unitsSelectMenu.value = speedUnits;
+	}
+
+	// Set the units in the description to the selected units
+	document.getElementById("unitsDescription").innerHTML = unitsSelectMenu.value;
+}
+
+// Called by the variableSelect menu
+async function variableSelect() {
+	updateUnitsSelectMenu();
+	restoreValueThreshold();
+	updateStyleSelectMenu();
+	await loadForecast();		// Load the currently selected forecast
 	drawPlots();
 }
 
@@ -54,6 +396,24 @@ function regionSelect() {
 	regionName = document.getElementById("regionSelect").value;
 	drawMarker = false;	// No longer draw the histograms
 	document.getElementById("removeHistBttn").style.display = "none";	// Hide the button
+	drawPlots();
+}
+
+// Called by the initialisationSelect menu
+async function initialisationSelect() {
+	
+	// Set the valid date and change the initialisation text from valid.
+	initOrValid = document.getElementById("initialisationSelect").value;
+	if (initOrValid == "initialisationDate") {		// A single initialisation date
+		// Set the text for the next menu to valid
+		document.getElementById("initialisationOrValidText").innerHTML = "Valid:";
+	} else if (initOrValid == "validDate") {		// A single valid date
+		// Set the text for the next menu to initialised
+		document.getElementById("initialisationOrValidText").innerHTML = "Initialised:";
+	}
+	
+	updateDateMenus();
+	await loadForecast();
 	drawPlots();
 }
 
@@ -70,9 +430,63 @@ async function validTimeSelect() {
 	drawPlots();
 }
 
+// Set the style select menu depending upon the variable
+function updateStyleSelectMenu() {
+
+	// The units select menu
+	let styleSelectMenu = document.getElementById("styleSelect");
+
+	// Remove all of the current menu items
+	while (styleSelectMenu.hasChildNodes()) {
+		styleSelectMenu.removeChild(styleSelectMenu.firstChild);
+	}
+
+	// Which variable do we have selected
+	let variable = getVariableInfo();
+
+	// Add the menu items
+	let option;
+	if ((variable.name == "Rain") || (variable.name == "cp") || (variable.name == "tp")) {
+		const items = ["Default","ICPAC","KMSA","EMI","ECMWF","ECMWF2","ECMWF-EFI","ECMWF-ECPOINT"];
+		for (let i=0;i<items.length;i++) {
+			option = document.createElement("option");
+			option.value = items[i];
+			option.innerHTML = items[i];
+			styleSelectMenu.appendChild(option);
+		}
+		style = precipPlotStyle;	// Select the style previously selected for rainfall
+	} else {
+		// Default menu only
+		option = document.createElement("option");
+		option.value = "Default";
+		option.innerHTML = "Default";
+		styleSelectMenu.appendChild(option);
+		style = "Default";
+	}
+
+	// Which style shall we use?
+	if ((variable.name == "Rain") || (variable.name == "cp") || (variable.name == "tp")) {
+		style = precipPlotStyle;
+	} else {
+		style = "Default";
+	}
+
+	// Set the menu to the style in use
+	styleSelectMenu.value = style;
+}
+
 // Called by the styleSelect menu
 function styleSelect() {
 	style = document.getElementById("styleSelect").value;
+
+	// Which variable do we have selected
+	let variable = getVariableInfo();
+	
+	// Ensure that this style is used from now on
+	if ((variable.name == "Rain") || (variable.name == "cp") || (variable.name == "tp")) {
+		precipPlotStyle = style;
+	}
+
 	drawPlots();
 }
 
@@ -89,6 +503,13 @@ function plotSelect() {
 
 // Called when the focus is lost in the value threshold input
 function pValueThresholdInput() {
+	drawPlots();
+}
+
+// Called when the absolute threshold value is checked/unchecked
+function absoluteVThresholdValueCheck() {
+	let variable = getVariableInfo();
+	variable.absThresholdValueChecked = document.getElementById("absoluteThresholdValue").checked;
 	drawPlots();
 }
 
@@ -116,20 +537,38 @@ function unitsSelect() {
 	document.getElementById("unitsDescription").innerHTML = units;
 	
 	// Update the value threshold to display in the current units
-	norm = getPlotNormalisation(units);
-	document.getElementById("thresholdValueSelect").value = roundSF(maxRain * norm, 3);
+	let norm = getPlotNormalisation(units);
+	document.getElementById("thresholdValueSelect").value = roundSF(valueThreshold * norm, 3);
+	// Also store the full value
+	document.getElementById("thresholdValueSelect").dataset.valueThreshold = valueThreshold;
 	
+	// Which variable do we have selected
+	let variable = getVariableInfo();
+
+	// Save the current units for later, if there's a choice
+	if ((variable.name == "Rain") || (variable.name == "cp") || (variable.name == "tp")) {
+		precipUnits = units;
+	} else if ((variable.name == "u10") || (variable.name == "v10") ||
+			   (variable.name == "wind_speed_10m") ||
+			   (variable.name == "u700") || (variable.name == "v700")) {
+		speedUnits = units;
+	}
+
 	// Draw plots with the new units
 	drawPlots();
 }
 
 // Called by the showExplanations input checkbox
 function showExplanation() {
-	
+
+	// Which variable do we have selected
+	let variable = getVariableInfo();
+
 	// If the ensemble mean or standard deviation is plotted the explanation box is always checked
-	if ((document.getElementById("plotSelect").value == "Mean") ||
-		(document.getElementById("plotSelect").value == "Std")) {
-		
+	if (((document.getElementById("plotSelect").value == "Mean") ||
+		(document.getElementById("plotSelect").value == "Std")) &&
+		((variable.name == "Rain") || (variable.name == "tp") || (variable.name == "cp"))) {
+
 		// Check the box
 		document.getElementById("showExplanation").checked = true;
 		
@@ -152,7 +591,8 @@ function showExplanation() {
 		// Get the accumulation time for the description
 		let accumulationTime = 6;
 		let easiestUnits = "mm/6h";
-		if (document.getElementById("modelSelect").value == "24h accumulation") {
+		if ((document.getElementById("modelSelect").value == "IFS 24h") ||
+			(document.getElementById("modelSelect").value == "IFS+cGAN 24h")) {
 			accumulationTime = 24;
 			easiestUnits = "mm/day";
 		}
@@ -161,163 +601,147 @@ function showExplanation() {
 		let thresholdProbability = document.getElementById("thresholdProbabilitySelect").value;
 		// Get the units for the description
 		let units = document.getElementById("unitsSelect").value;
+
+		// Only used if the variable is accumulated
+		let accumulationStr = "";
+		let accumationVarStr = "";
+		let accumulationUnitsStr = "";
+		if (variable.accumulated) {
+			accumulationStr = ` accumulated over `+accumulationTime+` hours between the
+				valid times`;
+			accumationVarStr = ` Setting the units to "`+
+				easiestUnits+`" means that the `+variable.longName.toLowerCase()+` values
+				plotted correspond to the total `+variable.longName.toLowerCase()+` over
+				this `+accumulationTime+` hour period.`;
+			accumulationUnitsStr = ` The units show the `+variable.longName.toLowerCase()+
+				` on average over the `+accumulationTime+` hour period.`;
+		}
+
+		// The normalisation for the current variable
+		let norm = getPlotNormalisation(units);
+		let thresholdToShow = roundSF(variable.defaultThreshold * norm, 3);
+
+		let rainMeanStr = "";
+		let rainMeanWarningStr = "";
+		let rainStdWarningStr = "";
+		if ((variable.name == "Rain") || (variable.name == "cp") || (variable.name == "tp")) {
+			rainMeanStr = ` which is a good alternative to the ensemble mean when looking
+				at rainfall`;
+			rainMeanWarningStr = ` <span style="color:red">WARNING: The ensemble mean is
+				usually not a good summary statistic for rainfall forecasts. </span>
+				The predicted rainfall distribution is far from normal (see the
+				histograms), and the ensemble mean is difficult to interpret. A good
+				alternative to the ensemble mean when looking at rainfall is the
+				<i>ensemble median</i>. The ensemble median plot can be made by selecting
+				"Values below probability" from the plot menu above and setting the
+				"Probability threshold" box to 50%.`
+			rainStdWarningStr = ` <span style="color:red">WARNING: The ensemble standard
+				deviation is usually not a good summary statistic for rainfall forecasts.
+				</span> The predicted rainfall distribution is far from normal (see the
+				histograms), and the ensemble standard deviation is difficult to
+				interpret. A good alternative to the ensemble standard deviation when
+				looking to estimate the range of rainfall is a probability threshold of
+				95%. This plot can be made by selecting "Values below probability" from
+				the plot menu above and setting the "Probability threshold" box to 95%.`;
+		}
+
+		let histogramString1 = ` <br><b>Histogram description:</b> The histogram
+			plot to the right of each map represents the `+variable.longName.toLowerCase()
+			+` predicted by each ensemble member at the location marked by the cross on
+			the map (at the labelled latitude and longitude). Each bar in the histogram
+			shows the number of forecast ensemble members that made a prediction in that `
+			+variable.longName.toLowerCase()+` interval.`;
+		let histogramString2 = ` The blue line corresponds to a value threshold (`+
+			thresholdValue+` `+units+`). The number of ensemble members to the right of
+			the blue line divided by the total number of ensemble members is the predicted
+			probability that the value threshold will be exceeded. This value can be set
+			in the "Value threshold" box above. `+thresholdProbability+`% of the ensemble
+			members are to the left of the red line and the rest are to the right of it.
+			This percentage can be set in the "Probability threshold" box above.`;
 	
 		// Explanation depends on the type of plot in the "Plot" menu.
 		if (document.getElementById("plotSelect").value == "Probability") {
 			explanationString +=
-				`<b>Map description:</b> The map shows the chance that rainfall
-				 accumulated over `+accumulationTime+` hours between the valid times, will
-				 be above `+thresholdValue+` `+units+` at each location. This chance has
-				 been calculated at each location from the histogram at that location.
+				`<b>Map description:</b> The map shows the chance that `
+				+variable.longName.toLowerCase()+accumulationStr+`, will be above `+
+				thresholdValue+` `+units+` at each location. This chance has been
+				calculated at each location from the histogram at that location.
 				 
-				 Each colour covers a range of probabilities. There are only five
-				 categories to illustrate that we should not be overconfident in the
-				 accuracy of our probability prediction and to make the plot clear. The
-				 precise probabilities calculated are available from the histograms.
+				Each colour covers a range of probabilities. There are only five
+				categories to illustrate that we should not be overconfident in the
+				accuracy of our probability prediction and to make the plot clear. The
+				precise probabilities calculated are available from the histograms.
 				 
-				 The value threshold (`+thresholdValue+` `+units+`) can be changed to the
-				 value you want in the "Value threshold" box above. The units can be set
-				 in the "Units" menu also above. For example, if you are interested in
-				 rainfall above 20 mm/day, first set the "Units" menu to "mm/day" and then
-				 set the "Value threshold" box to "20". Setting the units to "`+
-				 easiestUnits+`" means that the rainfall values plotted correspond to the
-				 total rainfall over this `+accumulationTime+` hour period.
+				The value threshold (`+thresholdValue+` `+units+`) can be changed to the
+				value you want in the "Value threshold" box above. The units can be set in
+				the "Units" menu also above. For example, if you are interested in `
+				+variable.longName.toLowerCase()+` above `+thresholdToShow+` `+units+`,
+				first set the "Units" menu to "`+units+`" and then set the "Value
+				threshold" box to "`+thresholdToShow+`".`+accumationVarStr+`
 				 
-				 The colour scale can be labelled as a percentage or in words by selecting
-				 "Show percentages" or "Show words" in the menu above.`;
+				The colour scale can be labelled as a percentage or in words by selecting
+				"Show percentages" or "Show words" in the menu above.`;
 			
 			if (drawMarker) {
-				explanationString += ` <br><b>Histogram description:</b> The histogram
-					plot to the right of each map represents the rainfall predicted by
-					each ensemble member at the location marked by the cross on the map
-					(at the labelled latitude and longitude). Each bar in the histogram
-					shows the number of forecast ensemble members that made a prediction
-					in that rainfall interval. The value threshold used in the map (`+
-					thresholdValue+` `+units+`) is represented at this location by the
-					blue line. The number of ensemble members to the right of the blue
-					line divided by the total number of ensemble members is the predicted
-					probability that the threshold will be exceeded. `+
-					thresholdProbability+`% of the ensemble members are to the left of the
-					red line and the rest are to the right of it. This percentage can be
-					set in the "Probability threshold" box above.`;
+				explanationString += histogramString1+` The value threshold used in the
+				map (`+thresholdValue+` `+units+`) is represented at this location by the
+				blue line.`+histogramString2;
 			} else {
 				explanationString += ` <br><b>Click on the map to show the histogram at that point.</b>`;
 			}
 								  
 		} else if (document.getElementById("plotSelect").value == "Values") {
 			explanationString +=
-				`<b>Map description:</b> The map shows that for rainfall accumulated over
-				 `+accumulationTime+` hours between the valid times, `+
-				 thresholdProbability+`% of ensemble members predicted rainfall below the
-				 plotted value at each location. The remaining ensemble members predicted
-				 rainfall above the plotted value at each location. This rainfall value
-				 has been calculated at each location from the histogram at that location.
+				`<b>Map description:</b> The map shows that for `+
+				variable.longName.toLowerCase()+accumulationStr+`, `+thresholdProbability
+				+`% of ensemble members predicted `+variable.longName.toLowerCase()+
+				` below the plotted value at each location. The remaining ensemble members
+				predicted `+variable.longName.toLowerCase()+` above the plotted value at
+				each location. This `+variable.longName.toLowerCase()+` value has been
+				calculated at each location from the histogram at that location.
 				 
-				 The probability threshold (`+thresholdProbability+`%) can be changed to
-				 the percentage you want in the "Probability threshold" box above. A
-				 probability threshold of 50% corresponds to the <i>ensemble median</i>
-				 which is a good alternative to the ensemble mean when looking at
-				 rainfall. A probability threshold of 95% indicates that only 5% of
-				 ensemble members exceeded the plotted value. In that case rainfall above
-				 the predicted value is unlikely. A probability threshold of 95% is a
-				 good alternative to using the ensemble standard deviation to estimate the
-				 range of predicted rainfall.
+				The probability threshold (`+thresholdProbability+`%) can be changed to
+				the percentage you want in the "Probability threshold" box above. A
+				probability threshold of 50% corresponds to the <i>ensemble median</i>
+				`+rainMeanStr+`. A probability threshold of 95% indicates that only 5% of
+				ensemble members exceeded the plotted value. In that case `+
+				variable.longName.toLowerCase()+` above the predicted value is unlikely. A
+				probability threshold of 95% is a good alternative to using the ensemble
+				standard deviation to estimate the range of predicted `+
+				variable.longName.toLowerCase()+`.
 				 
-				 Each colour covers a range of values and the precise values calculated
-				 are available from the histograms. The units of the colour scale can be
-				 set in the "Units" menu above. The units show the rainfall rate on
-				 average over the `+accumulationTime+` hour period. Setting the units to
-				 "`+easiestUnits+`" means that the rainfall values plotted correspond to
-				 the total rainfall over this `+accumulationTime+` hour period.`;
+				Each colour covers a range of values and the precise values calculated
+				are available from the histograms. The units of the colour scale can be
+				set in the "Units" menu above.`+accumulationUnitsStr+accumationVarStr;
 			
 			if (drawMarker) {
-				explanationString += ` <br><b>Histogram description:</b> The histogram
-					plot to the right of each map represents the rainfall predicted by
-					each ensemble member at the location marked by the cross on the map
-					(at the labelled latitude and longitude). Each bar in the histogram
-					shows the number of forecast ensemble members that made a prediction
-					in that rainfall interval. The probability threshold used in the map
-					(`+thresholdProbability+`%) is represented at this location by the
-					red line. `+thresholdProbability+`% of the ensemble members are to the
-					left of the red line and the rest are to the right of it.
-					
-					The blue line corresponds to a value threshold (`+thresholdValue+` `+
-					units+`). The number of ensemble members to the right of the blue line
-					divided by the total number of ensemble members is the predicted
-					probability that the value threshold will be exceeded. This value can
-					be set in the "Value threshold" box above.`;
+				explanationString += histogramString1+` The probability threshold used in
+				the map (`+thresholdProbability+`%) is represented at this location by the
+				red line. `+thresholdProbability+`% of the ensemble members are to the
+				left of the red line and the rest are to the right of it.`+
+				histogramString2;
 			} else {
 				explanationString += ` <br><b>Click on the map to show the histogram at that point.</b>`;
 			}
 			
 		} else if (document.getElementById("plotSelect").value == "Mean") {
 			explanationString +=
-				`<b>Map description:</b> The map shows the ensemble mean rainfall
-				 accumulated over `+accumulationTime+` hours between the valid times at
-				 each location.
-				 
-				 <span style="color:red">WARNING: The ensemble mean is usually not a good
-				 summary statistic for rainfall forecasts. </span>
-				 
-				 The predicted rainfall distribution is far from normal (see the
-				 histograms), and the ensemble mean is difficult to interpret. A good
-				 alternative to the ensemble mean when looking at rainfall is the
-				 <i>ensemble median</i>. The ensemble median plot can be made by selecting
-				 "Values below probability" from the plot menu above and setting the
-				 "Probability threshold" box to 50%.`;
+				`<b>Map description:</b> The map shows the ensemble mean `+variable.longName.toLowerCase()
+				+accumulationStr+` at each location.`+rainMeanWarningStr;
 			
 			if (drawMarker) {
-				explanationString += ` <br><b>Histogram description:</b> The histogram
-					plot to the right of each map represents the rainfall predicted by
-					each ensemble member at the location marked by the cross on the map
-					(at the labelled latitude and longitude). Each bar in the histogram
-					shows the number of forecast ensemble members that made a prediction
-					in that rainfall interval.
-					
-					The blue line corresponds to a value threshold (`+thresholdValue+` `+
-					units+`). The number of ensemble members to the right of the blue line
-					divided by the total number of ensemble members is the predicted
-					probability that the value threshold will be exceeded. This value can
-					be set in the "Value threshold" box above. `+thresholdProbability+`%
-					of the ensemble members are to the left of the red line and the rest
-					are to the right of it. This percentage can be set in the "Probability
-					threshold" box above.`;
+				explanationString += histogramString1+histogramString2;
 			} else {
 				explanationString += ` <br><b>Click on the map to show the histogram at that point.</b>`;
 			}
 			
 		} else if (document.getElementById("plotSelect").value == "Std") {
 			explanationString +=
-				`<b>Map description:</b> The map shows the ensemble standard deviation of
-				 rainfall accumulated over `+accumulationTime+` hours between the valid
-				 times at each location.
-				 
-				 <span style="color:red">WARNING: The ensemble standard deviation is
-				 usually not a good summary statistic for rainfall forecasts. </span>
-				 
-				 The predicted rainfall distribution is far from normal (see the
-				 histograms), and the ensemble standard deviation is difficult to
-				 interpret. A good alternative to the ensemble standard deviation when
-				 looking to estimate the range of rainfall is a probability threshold of
-				 95%. This plot can be made by selecting "Values below probability" from
-				 the plot menu above and setting the "Probability threshold" box to 95%.`;
+				`<b>Map description:</b> The map shows the ensemble standard deviation of 
+				`+variable.longName.toLowerCase()+accumulationStr+` at each location.`+rainStdWarningStr;
 			
 			if (drawMarker) {
-				explanationString += ` <br><b>Histogram description:</b> The histogram
-					plot to the right of each map represents the rainfall predicted by
-					each ensemble member at the location marked by the cross on the map
-					(at the labelled latitude and longitude). Each bar in the histogram
-					shows the number of forecast ensemble members that made a prediction
-					in that rainfall interval.
-					
-					The blue line corresponds to a value threshold (`+thresholdValue+` `+
-					units+`). The number of ensemble members to the right of the blue line
-					divided by the total number of ensemble members is the predicted
-					probability that the value threshold will be exceeded. This value can
-					be set in the "Value threshold" box above. `+thresholdProbability+`%
-					of the ensemble members are to the left of the red line and the rest
-					are to the right of it. This percentage can be set in the "Probability
-					threshold" box above.`;
+				explanationString += histogramString1+histogramString2;
 			} else {
 				explanationString += ` <br><b>Click on the map to show the histogram at that point.</b>`;
 			}
@@ -348,6 +772,109 @@ function removeHistograms() {
 	drawPlots();
 }
 
+// Has an alert been called yet
+alertCalledG = false;
+
+// Parse the value threshold
+async function parseValueThreshold() {
+
+	// XXX Need to get the normalisation correct
+	let inputValue = document.getElementById("thresholdValueSelect").value;
+	let valueThreshold = parseFloat(inputValue);
+
+	// The value threhsold must be between the minimum and maximum values in the histogram
+	let minValue = GANForecast[0].bins[0];
+	let maxValue = GANForecast[0].bins[GANForecast[0].bins.length-1];
+	let err = false;
+	if (isNaN(valueThreshold)) {
+		let variable = getVariableInfo();
+		valueThreshold = variable.defaultThreshold;
+		err = true;
+	}
+	if (valueThreshold < minValue) {
+		// The value threshold must be equal or higher than the first bin
+		valueThreshold = minValue;
+		err = true;
+	}
+	if (valueThreshold > maxValue) {
+		// The value threshold must be equal or lower than the last bin
+		valueThreshold = maxValue;
+		err = true;
+	}
+
+	// Put up an error alert
+	if (err) {
+
+		// Update the value threshold to display in the current units
+		let norm = getPlotNormalisation(units);
+		document.getElementById("thresholdValueSelect").value = roundSF(valueThreshold * norm, 3);
+		// Also store the full value
+		document.getElementById("thresholdValueSelect").dataset.valueThreshold = valueThreshold;
+
+		document.activeElement.blur();
+		if (!alertCalledG) {
+			alertCalledG = true;
+			if (minValue == -Infinity) {
+				await alert("Value threshold must be below "+roundSF(maxValue * norm, 3)+" "+units+".");
+			} else if (maxValue == Infinity) {
+				await alert("Value threshold must be above "+roundSF(minValue * norm, 3)+" "+units+".");
+			} else {
+				await alert("Value threshold must be between "+
+							roundSF(minValue * norm, 3)+" "+units+" and "+
+							roundSF(maxValue * norm, 3)+" "+units+".");
+			}
+		}
+	}
+
+	alertCalledG = false;
+}
+
+// Parse the value threshold
+async function parseProbabilityThreshold() {
+
+	let inputValue = document.getElementById("thresholdProbabilitySelect").value;
+	let probabilityThreshold = parseFloat(inputValue);
+
+	// The value threhsold must be between the minimum and maximum values in the histogram
+	let minValue = 0;
+	let maxValue = 100;
+	let err = false;
+	if (isNaN(probabilityThreshold)) {
+		probabilityThreshold = 95;
+		err = true;
+	}
+	if (probabilityThreshold < minValue) {
+		// The value threshold must be equal or higher than the first bin
+		probabilityThreshold = minValue;
+		err = true;
+	}
+	if (probabilityThreshold > maxValue) {
+		// The value threshold must be equal or lower than the last bin
+		probabilityThreshold = maxValue;
+		err = true;
+	}
+
+	// Put up an error alert
+	if (err) {
+		document.activeElement.blur();
+		if (!alertCalledG) {
+			alertCalledG = true;
+			await alert("Probability threshold must be between 0% and 100%.");
+		}
+
+		// Now set the value threshold to the new value
+		document.getElementById("thresholdProbabilitySelect").value = probabilityThreshold;
+	}
+
+	alertCalledG = false;
+}
+
+// Check the input boxes for correct input, and if necessary, correct them.
+async function checkInputs() {
+	parseValueThreshold();
+	parseProbabilityThreshold();
+}
+
 // Loads and plots the currently selected forecast
 async function loadForecast() {
 	let year = document.getElementById("initYearSelect").value;
@@ -357,39 +884,108 @@ async function loadForecast() {
 	let validTimeMenu = document.getElementById("validTimeSelect").value;
 	
 	// The directory name depends upon which model we are looking at
-	let countsDir;
-	let accumulationHours;
-	if (modelName == "6h accumulation") {
-		countsDir = "counts_6h";
+	let countsDir,accumulationHours,varName,hourChar,variableInfo;
+	if (modelName == "IFS 6h") {
+		varName = document.getElementById("variableSelect").value;
+		// Get the the variableInfoAll object
+		variableInfo = variableInfoAll.find(function(variable) {
+			return variable.name === varName;
+		});
+		countsDir = "IFS_counts_6h/" + varName;
 		accumulationHours = 6;
-	} else if (modelName == "24h accumulation") {
-		countsDir = "counts_24h";
+		varName += "_";
+		hourChar = "+";
+
+	} else if (modelName == "IFS 24h") {
+		varName = document.getElementById("variableSelect").value;
+		// Get the the variableInfoAll object
+		variableInfo = variableInfoAll.find(function(variable) {
+			return variable.name === varName;
+		});
+		countsDir = "IFS_counts_24h/" + varName;
 		accumulationHours = 24;
+		varName += "_";
+		hourChar = "+";
+
+	} else if (modelName == "IFS+cGAN 6h") {
+		countsDir = "IFS_cGAN_counts_6h";
+		accumulationHours = 6;
+		varName = "";
+		hourChar = "";
+		variableInfo = rainfallInfo;
+
+	} else if (modelName == "IFS+cGAN 24h") {
+		countsDir = "IFS_cGAN_counts_24h";
+		accumulationHours = 24;
+		varName = "";
+		hourChar = "";
+		variableInfo = rainfallInfo;
 	}
 	
 	// If we should load all valid times
+	let yearToLoad,monthToLoad,dayToLoad,timeToLoad,validTimeToLoad;
 	if (validTimeMenu == "All") {
 		for (let i=0;i<validTimes.length;i++) {
 			// The cGAN forecast file to load
-			let fileName = "../data/"+countsDir+"/"+year+"/counts_"+year
-										 +month.padStart(2,'0')
-										 +day.padStart(2,'0')
-										 +"_"+time.padStart(2,'0')
-										 +"_"+validTimes[i]+"h.nc";
+			if (document.getElementById("initialisationSelect").value == "initialisationDate") {
+				// Menu represents an initialisation time
+				yearToLoad = year;
+				monthToLoad = month;
+				dayToLoad = day;
+				timeToLoad = time;
+				validTimeToLoad = validTimes[i];
+			} else {
+				// Menu represents a valid time
+				dateString = year+"-"+String(month).padStart(2,'0')
+							 +"-"+String(day).padStart(2,'0');
+				initTime = timeOffsetToDate(parseInt(time)-validTimes[i], dateString);
+				
+				yearToLoad = initTime.getUTCFullYear();
+				monthToLoad = initTime.getUTCMonth()+1;
+				dayToLoad = initTime.getUTCDate();
+				timeToLoad = initTime.getUTCHours();
+				validTimeToLoad = validTimes[i];
+			}
+			let fileName = "../data/"+countsDir+"/"+yearToLoad+"/counts_"+varName
+									 +yearToLoad
+									 +String(monthToLoad).padStart(2,'0')
+									 +String(dayToLoad).padStart(2,'0')
+									 +"_"+String(timeToLoad).padStart(2,'0')
+									 +"_"+hourChar+validTimeToLoad+"h.nc";
 			
 			// Load data into the forecastDataObject
-			await GANForecast[i].loadGANForecast(fileName, modelName, accumulationHours);
+			await GANForecast[i].loadGANForecast(fileName, modelName, accumulationHours, variableInfo);
 		}
 	} else {	// Load a single valid time
 		// The cGAN forecast file to load
-		let fileName = "../data/"+countsDir+"/"+year+"/counts_"+year
-									 +month.padStart(2,'0')
-									 +day.padStart(2,'0')
-									 +"_"+time.padStart(2,'0')
-									 +"_"+validTimeMenu+"h.nc";
-		
+		if (document.getElementById("initialisationSelect").value == "initialisationDate") {
+			// Menu represents an initialisation time
+			yearToLoad = year;
+			monthToLoad = month;
+			dayToLoad = day;
+			timeToLoad = time;
+			validTimeToLoad = validTimeMenu;
+		} else {
+			// Menu represents a valid time
+			dateString = year+"-"+String(month).padStart(2,'0')
+							 +"-"+String(day).padStart(2,'0');
+			initTime = timeOffsetToDate(parseInt(time)-validTimeMenu, dateString);
+			
+			yearToLoad = initTime.getUTCFullYear();
+			monthToLoad = initTime.getUTCMonth()+1;
+			dayToLoad = initTime.getUTCDate();
+			timeToLoad = initTime.getUTCHours();
+			validTimeToLoad = validTimeMenu;
+		}
+		let fileName = "../data/"+countsDir+"/"+yearToLoad+"/counts_"+varName
+								 +yearToLoad
+								 +String(monthToLoad).padStart(2,'0')
+								 +String(dayToLoad).padStart(2,'0')
+								 +"_"+String(timeToLoad).padStart(2,'0')
+								 +"_"+hourChar+validTimeToLoad+"h.nc";
+									 
 		// Load data into the forecastDataObject
-		await GANForecast[0].loadGANForecast(fileName, modelName, accumulationHours);
+		await GANForecast[0].loadGANForecast(fileName, modelName, accumulationHours, variableInfo);
 	}
 }
 
@@ -438,10 +1034,11 @@ function updateMenu(dateObject,datesText,id) {
 	
 	// Add the "Plot all valid times" menu item.
 	if (datesText.length > dateObject.length) {
-		if (datesText[datesText.length-1] == "Plot all valid times") {
+		if ((datesText[datesText.length-1] == "Plot all valid times") ||
+			(datesText[datesText.length-1] == "Plot all initialisation times")) {
 			let option = document.createElement("option");
 			option.value = "All";
-			option.innerHTML = "Plot all valid times";
+			option.innerHTML = datesText[datesText.length-1];
 			dateSelect.appendChild(option);
 		}
 	}
@@ -462,11 +1059,37 @@ function updateMenu(dateObject,datesText,id) {
 
 function updateDateMenus() {
 	
-	// The available months are listed in availableDates
-	year = updateMenu(availableDates,[],"initYearSelect");
+	// Are we using initialisation or valid dates for the dates menus?
+	initDateUsed = (document.getElementById("initialisationSelect").value == "initialisationDate");
+	let menuDates;
+	let offsetSign;
+	if (initDateUsed) {
+		menuDates = availableDates;
+		offsetSign = "+";
+
+		// Set tooltips to initilisation date configuration
+		document.getElementById("initYearSelect").title  = "Forecast initialisation year";
+		document.getElementById("initMonthSelect").title  = "Forecast initialisation month";
+		document.getElementById("initDaySelect").title  = "Forecast initialisation day";
+		document.getElementById("initTimeSelect").title  = "Forecast initialisation time";
+		document.getElementById("validTimeSelect").title  = "Start of the time we are forecasting";
+	} else {
+		menuDates = validDates;
+		offsetSign = "-";
+
+		// Set tooltips to valid date configuration
+		document.getElementById("initYearSelect").title  = "Year in which we are forecasting";
+		document.getElementById("initMonthSelect").title  = "Month in which we are forecasting";
+		document.getElementById("initDaySelect").title  = "Day in which we are forecasting";
+		document.getElementById("initTimeSelect").title  = "Start of the time we are forecasting";
+		document.getElementById("validTimeSelect").title  = "Forecast initialisation time";
+	}
+	
+	// The available months are listed in menuDates
+	year = updateMenu(menuDates,[],"initYearSelect");
 	
 	// The available months depend upon the year
-	let yearObject = availableDates[String(year)];
+	let yearObject = menuDates[String(year)];
 	month = updateMenu(yearObject,[],"initMonthSelect");
 	
 	// The available days depend upon the year and month
@@ -488,29 +1111,44 @@ function updateDateMenus() {
 	// We use a custom string for the valid time menu elements
 	let validTimeStrings = new Array(validTimes.length+1);
 	for (let i=0;i<validTimes.length;i++) {
-		// What's the valid date? (YYYY-MM-DD)
-		validDate = timeOffsetToDate(validTimes[i]+parseInt(time),
-									 year+"-"+String(month).padStart(2,'0')
-										 +"-"+String(day).padStart(2,'0'));
+		if (initDateUsed) {
+			// What's the valid date? (YYYY-MM-DD)
+			validDate = timeOffsetToDate(validTimes[i]+parseInt(time),
+										 year+"-"+String(month).padStart(2,'0')
+											 +"-"+String(day).padStart(2,'0'));
+		} else {
+			// What's the initialisation date? (YYYY-MM-DD)
+			validDate = timeOffsetToDate(parseInt(time)-validTimes[i],
+										 year+"-"+String(month).padStart(2,'0')
+											 +"-"+String(day).padStart(2,'0'));
+		}
 				
 		validTimeStrings[i] = validDate.getUTCFullYear()
 							+"-"+String(validDate.getUTCMonth()+1).padStart(2,'0')
 							+"-"+String(validDate.getUTCDate()).padStart(2,'0')
 							+" "+String(validDate.getUTCHours()).padStart(2,'0')
-							+":00 UTC (+"+validTimes[i]+"h)";
+							+":00 UTC ("+offsetSign+validTimes[i]+"h)";
 	}
 	// Add an "Plot all valid times" option
-	validTimeStrings[validTimes.length] = "Plot all valid times";
+	if (initDateUsed) {
+		validTimeStrings[validTimes.length] = "Plot all valid times";
+	} else {
+		validTimeStrings[validTimes.length] = "Plot all initialisation times";
+	}
 	updateMenu(validTimes,validTimeStrings,"validTimeSelect");
 }
 
 async function loadDates() {
 	// Fetch a remote file
 	let fileName;
-	if (modelName == "6h accumulation") {
-		fileName = "../data/counts_6h/available_dates.json?"+dateLoadNumber;
-	} else if (modelName == "24h accumulation") {
-		fileName = "../data/counts_24h/available_dates.json?"+dateLoadNumber;
+	if (modelName == "IFS 6h") {
+		fileName = "../data/IFS_counts_6h/tp/available_dates.json?"+dateLoadNumber;
+	} else if (modelName == "IFS 24h") {
+		fileName = "../data/IFS_counts_24h/tp/available_dates.json?"+dateLoadNumber;
+	} else if (modelName == "IFS+cGAN 6h") {
+		fileName = "../data/IFS_cGAN_counts_6h/available_dates.json?"+dateLoadNumber;
+	} else if (modelName == "IFS+cGAN 24h") {
+		fileName = "../data/IFS_cGAN_counts_24h/available_dates.json?"+dateLoadNumber;
 	}
 	// dateLoadNumber ensures that the available_dates.json file is not cached
 	dateLoadNumber += 1;
@@ -522,6 +1160,9 @@ async function loadDates() {
 	// Parse the JSON arrayBuffer of the file and return the resulting object
 	availableDates = await response.json();
 	
+	// Compute valid dates from availableDates
+	validDates = availableDatesToValidDates(availableDates);
+		
 	// Pick the final date to load
 // 	let years = Object.keys(availableDates);
 // 	let year = years[years.length-1];
@@ -560,13 +1201,16 @@ function initControls() {
 	
 	document.getElementById("regionSelect").value = regionName;
 	
+	updateStyleSelectMenu();
 	document.getElementById("styleSelect").value = style;
 	
 	document.getElementById("plotSelect").value = plotType;
 	
 	// Need to get the units correct
-	norm = getPlotNormalisation(units);
-	document.getElementById("thresholdValueSelect").value = roundSF(maxRain * norm, 3);
+	let norm = getPlotNormalisation(units);
+	document.getElementById("thresholdValueSelect").value = roundSF(valueThreshold * norm, 3);
+	// Also store the full value
+	document.getElementById("thresholdValueSelect").dataset.valueThreshold = valueThreshold;
 	
 	document.getElementById("unitsDescription").innerHTML = units;
 	
@@ -607,6 +1251,12 @@ function showLoadingStatus(code, message) {
 }
 
 async function init() {
+
+	// Set the start values of the thresholds to their defaults
+	for (let i=0;i<variableInfoAll.length;i++) {
+		variableInfoAll[i].currentThreshold = variableInfoAll[i].defaultThreshold;
+	}
+	rainfallInfo.currentThreshold = rainfallInfo.defaultThreshold;
 
 	// Set the default values of the plot controls
 	initControls();
@@ -756,12 +1406,32 @@ function listenForMouse(canvasNum) {
 
 async function drawPlots() {
 
+	// Check the input boxes for correct input, and if necessary, correct them.
+	await checkInputs();
+
 	// It's easier to update the plot explanation every time the plots are drawn
 	showExplanation();
 	
+	// Get the unitsSelect menu's value
+	units = document.getElementById("unitsSelect").value;
+
 	// See what the input boxes say
 	let norm = getPlotNormalisation(units);
-	maxRain = document.getElementById("thresholdValueSelect").value / norm;
+	
+	// The full precision valueThreshold stored
+	valueThreshold = document.getElementById("thresholdValueSelect").dataset.valueThreshold;
+
+	// If valueThreshold * norm rounded is not the same as the user displayed value
+	if (roundSF(valueThreshold * norm, 3) != document.getElementById("thresholdValueSelect").value) {
+
+		// Use the user displayed value
+		valueThreshold = document.getElementById("thresholdValueSelect").value / norm;
+	}
+
+	// Save for when we change variables
+	let variable = getVariableInfo();
+	variable.currentThreshold = valueThreshold;
+
 	probability = document.getElementById("thresholdProbabilitySelect").value / 100.0;
 	
 	// Find out how many plots to make
@@ -878,7 +1548,7 @@ async function drawPlots() {
 		let plotRect;
 		if (plotType == "Probability") {
 			plotRect = await GANForecast[canvasNum].plotExceedanceProbability(ctx, x, y, width, height,
-																   maxRain, units, style,
+																   valueThreshold, units, style,
 																   showPercentages, regionName);
 		} else if (plotType == "Values") {
 			plotRect = await GANForecast[canvasNum].plotExceedanceValue(ctx, x, y, width, height,
@@ -968,7 +1638,7 @@ async function drawPlots() {
 			
 			// Plot the histogram and wait for it to finish
 			await GANForecast[canvasNum].plotHistogram(histogramCtx, x2, y2, width, height,
-						maxRain, probability,latitudeIdx, longitudeIdx, units, barChartSpec);
+						valueThreshold, probability,latitudeIdx, longitudeIdx, units, barChartSpec);
 		}
 	}
 }

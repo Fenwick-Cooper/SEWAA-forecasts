@@ -271,10 +271,10 @@ if __name__=='__main__':
         cGAN_counts_path = f"{root_dir}/interface/view_forecasts/data"
         
         # Where the cGAN 6h histogram counts will be stored
-        cGAN_counts_path_6h = f"{cGAN_counts_path}/counts_6h"
+        cGAN_counts_path_6h = f"{cGAN_counts_path}/IFS_cGAN_counts_6h"
         
         # Where the cGAN 24h histogram counts will be stored
-        cGAN_counts_path_24h = f"{cGAN_counts_path}/counts_24h"
+        cGAN_counts_path_24h = f"{cGAN_counts_path}/IFS_cGAN_counts_24h"
         
         
         # Download IFS data

@@ -9,7 +9,7 @@ import netCDF4 as nc
 data_dir = "cGAN_forecasts"
 
 # Where the counts are saved to
-output_dir = '../interface/view_forecasts/data/counts_24h'
+output_dir = '../interface/view_forecasts/data/IFS_cGAN_counts_24h'
 
 # Smaller chunk size means slower but less RAM usage
 # Larger chunk size means faster but more RAM usage

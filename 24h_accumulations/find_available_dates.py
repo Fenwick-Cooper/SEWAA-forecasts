@@ -12,7 +12,7 @@ import numpy as np
 import json
 
 # The directory with the counts data in
-counts_dir = "../interface/view_forecasts/data/counts_24h"
+counts_dir = "../interface/view_forecasts/data/IFS_cGAN_counts_24h"
 
 # Find the years to include
 counts_years = []

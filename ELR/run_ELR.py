@@ -23,7 +23,6 @@ from sklearn.exceptions import InconsistentVersionWarning
 import time
 import gc
 
-
 OUT_PATH = paths['OUT_PATH']
 FCST_PATH = paths['FCST_PATH']
 MODEL_PATH = paths['MODEL_PATH']
@@ -31,18 +30,12 @@ MODEL_PATH = paths['MODEL_PATH']
 if not os.path.exists(OUT_PATH):
     os.makedirs(OUT_PATH)
 
-fcstyaml_path = "elr.yaml"
-with open(fcstyaml_path, "r") as f:
-    try:
-        fcst_params = yaml.safe_load(f)
-    except yaml.YAMLError as exc:
-        print(exc)
-
-COUNTRY = fcst_params['COUNTRY']
-MEAN = fcst_params['MEAN'][COUNTRY]
-
-countries = ['Kenya','Ethiopia','Rwanda','Uganda']
-countries = [c for c in countries if c==COUNTRY]
+means = {
+    "Kenya": ["NORTH HORR", "Bura Sub County", "Galole Sub County"],
+    "Ethiopia": ["Geraleta", "Elidar", "Afdera", "Debay Telatgen", "Quara", "Jida", "Meda Welabu", "Seweyna", "Gashamo", "Shilabo", "Adadle", "Galadi", "Warder", "Filtu", "Lanfero", "Dima (GM)", "Sofi", "Aleta Wendo"],
+    "Rwanda": [],
+    "Uganda": [],
+}
 
 county = {'Ethiopia':False,'Kenya':True,'Rwanda':True,'Uganda':False}
 subcounty = {'Ethiopia':True,'Kenya':True,'Rwanda':False,'Uganda':True}
@@ -194,6 +187,7 @@ if __name__=='__main__':
     parser.add_argument('--model', help='IFS or GAN',default='GAN',type=str)
     parser.add_argument('--day', help='lead time (in days)',action='append',nargs='+',default=None,type=int)
     parser.add_argument('--accumulation', help='6h- or 24h- accumulation',default="24h_accumulations",type=str)
+    parser.add_argument('--country', help='which country to run ELR for',default="Kenya",type=str)
     parser.add_argument('--store_netcdf', help='Store as netcdf',default=True,action='store_true')
     
     args = parser.parse_args()
@@ -210,6 +204,9 @@ if __name__=='__main__':
         day = day[0]
     store_netcdf = args.store_netcdf
     accumulation = args.accumulation
+    countries = [args.country.capitalize()]
+
+    MEAN = means[args.country.capitalize()]
 
     for country in countries:
         county_loop = county[country]

@@ -10,23 +10,17 @@
 import os
 import numpy as np
 import json
-import yaml
-
+import argparse
 
 # The directory with the ELR predictions in
 elr_dir = "../interface/ensemble_logistic_regression/ELR_predictions/24h_accumulations/"
 country_regiontype = {"Kenya":"subcounty","Ethiopia":"subcounty","Rwanda":"county","Uganda":"subcounty"}
-fcstyaml_path = "elr.yaml"
-with open(fcstyaml_path, "r") as f:
-    try:
-        fcst_params = yaml.safe_load(f)
-    except yaml.YAMLError as exc:
-        print(exc)
 
-COUNTRY = fcst_params['COUNTRY']
+parser = argparse.ArgumentParser()
+parser.add_argument('--country', help='which country to run ELR for',default="Kenya",type=str)
+args = parser.parse_args()
 
-countries = ['Kenya','Ethiopia','Rwanda','Uganda']
-countries = [c for c in countries if c==COUNTRY]
+countries = [args.country.capitalize()]
 
 # Define the sort criteria
 def sortFunc(e):

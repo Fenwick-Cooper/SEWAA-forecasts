@@ -80,7 +80,9 @@ def parseArguments():
     parser.add_argument('--date', help='Forecast initialisation date (YYYYMMDD)',default=None,type=str)
     parser.add_argument('--time', help='Forecast initialisation time (HHMM)',default=None,type=str)    
     parser.add_argument('--delete_forecasts', help='Should forecasts be deleted or not (Y/N)',default=None,type=str)
-    parser.add_argument('--ELR_country', help='Which country ELR forecasts should be run for', default=None, type=str, choices=["Kenya", "Rwanda", "Uganda", "Ethiopia"])   
+    parser.add_argument('--ELR_country', help='Which country/countries ELR forecasts should be run for',
+                        default=None, type=str, nargs='+',
+                        choices=["Kenya", "Rwanda", "Uganda", "Ethiopia"])    
     args = parser.parse_args()
     
     # Parse the accumulation
@@ -167,7 +169,7 @@ def parseArguments():
 
     #parse ELR  
     if args.ELR_country is not None:
-        ELR_countries = [args.ELR_country]
+        ELR_countries = args.ELR_country
         run_ELR = True
     else:
         run_ELR = False
@@ -493,8 +495,9 @@ if __name__=='__main__':
             
                     print("Running ELR 24h forecasts.")
                     run_dir=ELR_script_path
-                    subprocess.run(["python", f"run_ELR.py", "--date", date_str, "--model", "GAN", 
-                                    "--accumulation", "24h_accumulations", "--country", ELR_countries[0]], cwd=run_dir)
+                    for country in ELR_countries:
+                        subprocess.run(["python", f"run_ELR.py", "--date", date_str, "--model", "GAN", 
+                                        "--accumulation", "24h_accumulations", "--country", country], cwd=run_dir)
                 
                 else:
                     print("ELR files already exist.")
@@ -525,7 +528,8 @@ if __name__=='__main__':
         if ((hour == 0) and (run_ELR)):
             print("Listing ELR available dates.")
             run_dir = "ELR"
-            subprocess.run(["python", f"ELR_available_dates.py", "--country", ELR_countries[0]], cwd=run_dir)
+            for country in ELR_countries:
+                subprocess.run(["python", f"ELR_available_dates.py", "--country", country], cwd=run_dir)
         
         # Delete the cGAN forecast
         if delete_forecasts:

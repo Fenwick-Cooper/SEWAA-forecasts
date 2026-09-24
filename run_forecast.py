@@ -248,11 +248,17 @@ if __name__=='__main__':
         # Where cGAN 24h forecasts will be stored
         cGAN_forecast_path_24h = f"{root_dir}/24h_accumulations/cGAN_forecasts"
         
+        # Where the IFS+cGAN RFE2 forecasts will be stored
+        IFS_cGAN_RFE2_forecast_path_24h = f"{root_dir}/IFS_cGAN_RFE_24h/cGAN_forecasts"
+        
         # Where the 6h cGAN model forecast script is located
         cGAN_forecast_script_path_6h = f"{root_dir}/6h_accumulations/cGAN/dsrnngan"
         
         # Where the 6h cGAN model forecast script is located
         cGAN_forecast_script_path_24h = f"{root_dir}/24h_accumulations/cGAN/dsrnngan"
+        
+        # Where the 24h IFS+cGAN RFE2 model forecast script is located
+        IFS_cGAN_RFE2_forecast_script_path_24h = f"{root_dir}/IFS_cGAN_RFE_24h/cGAN/dsrnngan"
 
         # Where the ELR model script is located
         ELR_script_path = f"{root_dir}/ELR/"
@@ -264,8 +270,9 @@ if __name__=='__main__':
         ELR_predictions_path = f"{root_dir}/interface/ensemble_logistic_regression/ELR_predictions/"
 
         # Countries for ELR
-        ELR_countries = ["Rwanda","Kenya","Ethiopia"]
-        ELR_country_admin_regions = {"Rwanda":"county","Kenya":"subcounty","Ethiopia":"subcounty"}
+        ELR_countries = ["Rwanda","Kenya","Ethiopia","Uganda"]
+        ELR_country_admin_regions = {"Rwanda":"county","Kenya":"subcounty",
+                                     "Ethiopia":"subcounty","Uganda":"subcounty"}
         
         # Where all of the cGAN histogram counts will be stored
         cGAN_counts_path = f"{root_dir}/interface/view_forecasts/data"
@@ -275,6 +282,9 @@ if __name__=='__main__':
         
         # Where the cGAN 24h histogram counts will be stored
         cGAN_counts_path_24h = f"{cGAN_counts_path}/IFS_cGAN_counts_24h"
+        
+        # Where the IFS+cGAN RFE2 histogram counts will be stored
+        IFS_cGAN_RFE2_counts_path_24h = f"{cGAN_counts_path}/IFS_cGAN_RFE_counts_24h"
         
         
         # Download IFS data

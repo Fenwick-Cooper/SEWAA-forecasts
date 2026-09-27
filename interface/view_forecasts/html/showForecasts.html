@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Madagascar north rainfall</title>
+<title>South East Africa rainfall</title>
 </head>
 <body>
 
 <h3>
-Madagascar north rainfall forecasts.
+South East Africa rainfall forecasts.
 </h3>
 
 <p>Click for local distribution. Use arrow keys to change location by 0.1 degrees.</p>
@@ -14,16 +14,17 @@ Madagascar north rainfall forecasts.
 <p>
 Model:
 <select id="modelSelect" onchange="modelSelect()">
-	<option value="6h accumulation">6h accumulation</option>
-    <option value="24h accumulation">24h accumulation</option>
+	<option value="IFS+cGAN IMERG 6h" disabled>IFS+cGAN IMERG 6h</option>
+    <option value="IFS+cGAN IMERG 24h">IFS+cGAN IMERG 24h</option>
 </select>
 <span id="modelInfo">
-: The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a> 
-<a href="https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS" target="_blank">
-IFS</a> output is post-processed using
-<a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120" target="_blank">
-cGAN</a> trained on <a href="https://gpm.nasa.gov/data/imerg" target="_blank"> IMERG</a>
-v6 to produce forecasts of 6h rainfall intervals. Model version 1.
+: The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a>
+<a href="https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS" target="_blank">IFS</a>
+output is post-processed using
+<a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120" target="_blank">cGAN</a>
+trained on <a href="https://gpm.nasa.gov/data/imerg" target="_blank"> IMERG</a>
+v7 and IFS hindcasts from 2014-2019 October to March inclusive to produce forecasts of 6h rainfall intervals.
+Model version 1.
 </span>
 </p>
 

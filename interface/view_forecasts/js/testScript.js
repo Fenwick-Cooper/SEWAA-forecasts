@@ -1,10 +1,10 @@
-// Models were: "Jurre brishti", "Muva kubwa"
-// Models: "6h accumulation", "24h accumulation"
-let modelName = "6h accumulation"
+// Models were: "IFS+cGAN IMERG 6h", "IFS+cGAN IMERG 24h"
+// Models: "IFS+cGAN IMERG 6h", "IFS+cGAN IMERG 24h"
+let modelName = "IFS+cGAN IMERG 24h"
 // Regions: Burundi, Djibouti, Eritrea, Ethiopia, Kenya, Rwanda, Somalia, South Sudan,
 //          Sudan, Tanzania, Uganda, ICPAC, East Africa, All.
-// There is ony one region for the Madagascar north model
-let regionName = "Madagascar north";
+// There is ony one region for the Madagascar north and South East Africa models.
+let regionName = "South East Africa";
 let units = "mm/6h";			// Can be mm/h, mm/6h, mm/day, mm/week
 let style = "Default";			// Can be "Default", "ICPAC", "KMD", "EMI", "ECMWF".
 let plotType="Probability";		// Can be "Probability", "Values", "Mean" or "Std".
@@ -37,10 +37,24 @@ async function modelSelect() {
 	
 	// Set the model description
 	if (modelName == "6h accumulation") {
-		document.getElementById("modelInfo").innerHTML = "The <a href=\"https://www.ecmwf.int/\" target=\"_blank\">ECMWF</a> <a href=\"https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS\" target=\"_blank\">IFS</a> output is post-processed using <a href=\"https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120\" target=\"_blank\">cGAN</a> trained on <a href=\"https://gpm.nasa.gov/data/imerg\" target=\"_blank\"> IMERG</a> v6 from 2018 and 2019 to produce forecasts of 6h rainfall intervals. Model version 1.";
+		document.getElementById("modelInfo").innerHTML =
+			`The <a href=\"https://www.ecmwf.int/\" target=\"_blank\">ECMWF</a>
+			<a href=\"https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS\" target=\"_blank\">IFS</a>
+			output is post-processed using
+			<a href=\"https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120\" target=\"_blank\">cGAN</a>
+			trained on <a href=\"https://gpm.nasa.gov/data/imerg\" target=\"_blank\"> IMERG</a>
+			v7 and IFS hindcasts from 2014-2019 October to March inclusive to produce forecasts of 6h rainfall intervals.
+			Model version 1.`;
 	
 	} else if (modelName == "24h accumulation") {
-		document.getElementById("modelInfo").innerHTML = "The <a href=\"https://www.ecmwf.int/\" target=\"_blank\">ECMWF</a> <a href=\"https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS\" target=\"_blank\">IFS</a> output is post-processed using <a href=\"https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120\" target=\"_blank\">cGAN</a> trained on <a href=\"https://gpm.nasa.gov/data/imerg\" target=\"_blank\"> IMERG</a> v7 from 2018, 2019, 2020 and 2021 to produce forecasts of 24h rainfall intervals. Model version 2.";
+		document.getElementById("modelInfo").innerHTML =
+			`The <a href=\"https://www.ecmwf.int/\" target=\"_blank\">ECMWF</a>
+			<a href=\"https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS\" target=\"_blank\">IFS</a>
+			output is post-processed using
+			<a href=\"https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120\" target=\"_blank\">cGAN</a>
+			trained on <a href=\"https://gpm.nasa.gov/data/imerg\" target=\"_blank\"> IMERG</a>
+			v7 and IFS hindcasts from 2014-2019 October to March inclusive to produce forecasts of 24h rainfall intervals.
+			Model version 1.`;
 
 	}
 	await loadDates();		// Each model has it's own set of available dates
@@ -360,11 +374,11 @@ async function loadForecast() {
 	// The directory name depends upon which model we are looking at
 	let countsDir;
 	let accumulationHours;
-	if (modelName == "6h accumulation") {
-		countsDir = "counts_6h";
+	if (modelName == "IFS+cGAN IMERG 6h") {
+		countsDir = "IFS_cGAN_counts_6h";
 		accumulationHours = 6;
-	} else if (modelName == "24h accumulation") {
-		countsDir = "counts_24h";
+	} else if (modelName == "IFS+cGAN IMERG 24h") {
+		countsDir = "IFS_cGAN_counts_24h";
 		accumulationHours = 24;
 	}
 	
@@ -508,10 +522,10 @@ function updateDateMenus() {
 async function loadDates() {
 	// Fetch a remote file
 	let fileName;
-	if (modelName == "6h accumulation") {
-		fileName = "../data/counts_6h/available_dates.json?"+dateLoadNumber;
-	} else if (modelName == "24h accumulation") {
-		fileName = "../data/counts_24h/available_dates.json?"+dateLoadNumber;
+	if (modelName == "IFS+cGAN IMERG 6h") {
+		fileName = "../data/IFS_cGAN_counts_6h/available_dates.json?"+dateLoadNumber;
+	} else if (modelName == "IFS+cGAN IMERG 24h") {
+		fileName = "../data/IFS_cGAN_counts_24h/available_dates.json?"+dateLoadNumber;
 	}
 	// dateLoadNumber ensures that the available_dates.json file is not cached
 	dateLoadNumber += 1;

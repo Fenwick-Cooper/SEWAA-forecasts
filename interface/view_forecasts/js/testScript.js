@@ -375,10 +375,10 @@ async function loadForecast() {
 	let countsDir;
 	let accumulationHours;
 	if (modelName == "IFS+cGAN IMERG 6h") {
-		countsDir = "IFS_cGAN_counts_6h";
+		countsDir = "ifs+cgan_imerg_6h/histograms";
 		accumulationHours = 6;
 	} else if (modelName == "IFS+cGAN IMERG 24h") {
-		countsDir = "IFS_cGAN_counts_24h";
+		countsDir = "ifs+cgan_imerg_24h/histograms";
 		accumulationHours = 24;
 	}
 	
@@ -386,7 +386,7 @@ async function loadForecast() {
 	if (validTimeMenu == "All") {
 		for (let i=0;i<validTimes.length;i++) {
 			// The cGAN forecast file to load
-			let fileName = "../data/"+countsDir+"/"+year+"/counts_"+year
+			let fileName = "../../../data/"+countsDir+"/"+year+"/counts_"+year
 										 +month.padStart(2,'0')
 										 +day.padStart(2,'0')
 										 +"_"+time.padStart(2,'0')
@@ -397,7 +397,7 @@ async function loadForecast() {
 		}
 	} else {	// Load a single valid time
 		// The cGAN forecast file to load
-		let fileName = "../data/"+countsDir+"/"+year+"/counts_"+year
+		let fileName = "../../../data/"+countsDir+"/"+year+"/counts_"+year
 									 +month.padStart(2,'0')
 									 +day.padStart(2,'0')
 									 +"_"+time.padStart(2,'0')
@@ -523,9 +523,9 @@ async function loadDates() {
 	// Fetch a remote file
 	let fileName;
 	if (modelName == "IFS+cGAN IMERG 6h") {
-		fileName = "../data/IFS_cGAN_counts_6h/available_dates.json?"+dateLoadNumber;
+		fileName = "../../../data/ifs+cgan_imerg_6h/histograms/available_dates.json?"+dateLoadNumber;
 	} else if (modelName == "IFS+cGAN IMERG 24h") {
-		fileName = "../data/IFS_cGAN_counts_24h/available_dates.json?"+dateLoadNumber;
+		fileName = "../../../data/ifs+cgan_imerg_24h/histograms/available_dates.json?"+dateLoadNumber;
 	}
 	// dateLoadNumber ensures that the available_dates.json file is not cached
 	dateLoadNumber += 1;

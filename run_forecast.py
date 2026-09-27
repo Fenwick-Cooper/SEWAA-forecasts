@@ -95,10 +95,9 @@ def parseArguments():
     )
 
     parser.add_argument(
-        '--delete_forecasts',
-        help='Should forecasts be deleted or not (Y/N)',
-        default=None,
-        type=str
+        '--keep_forecasts',
+        action='store_true',
+        help='Forecasts should be kept in addition to the histograms.',
     )
 
     # New cGAN arguments
@@ -209,12 +208,9 @@ def parseArguments():
         minute = 0
         
     # Parse delete_forecasts
-    delete_forecasts = False  # Default
-    if (args.delete_forecasts is not None):
-        
-        if ((args.delete_forecasts == "T") or (args.delete_forecasts == "t") or
-            (args.delete_forecasts == "Y") or (args.delete_forecasts == "y")):
-            delete_forecasts = True
+    delete_forecasts = True  # Default
+    if args.keep_forecasts:
+        delete_forecasts = False
 
     run_ELR = False
     
@@ -298,35 +294,32 @@ if __name__=='__main__':
         IFS_data_path = f"{root_dir}/data/IFS_forecast_data/{year}"
             
         # Where cGAN 6h forecasts will be stored
-        cGAN_forecast_path_6h = f"{root_dir}/data/ifs_6h_accumulations/cGAN_forecasts_6h"
+        cGAN_forecast_path_6h = f"{root_dir}/data/ifs+cgan_imerg_6h/cGAN_forecasts"
         
         # Where cGAN 24h forecasts will be stored
-        cGAN_forecast_path_24h = f"{root_dir}/data/ifs_24h_accumulations/cGAN_forecasts_24h"
+        cGAN_forecast_path_24h = f"{root_dir}/data/ifs+cgan_imerg_24h/cGAN_forecasts"
         
         # Where the cGAN model forecast script is located
-        cGAN_forecast_script_path = f"{root_dir}/ifs-cgan"
+        cGAN_forecast_script_path = f"{root_dir}/code/ifs+cgan_imerg"
 
         # Where the ELR model script is located
-        ELR_script_path = f"{root_dir}/ELR/"
+        ELR_script_path = f"{root_dir}/code/ELR"
 
         # Where the ELR models are located
-        ELR_model_path = f"{root_dir}/ELR/models/"
+        ELR_model_path = f"{root_dir}/models/ifs+cgan_imerg_24h/ELR"
 
         # Where the ELR predictions are saved
-        ELR_predictions_path = f"{root_dir}/interface/ensemble_logistic_regression/ELR_predictions/"
+        ELR_predictions_path = f"{root_dir}/data/ifs+cgan_imerg_24h/ELR_predictions"
 
         # Countries for ELR
         ELR_countries = ["Rwanda","Kenya","Ethiopia"]
         ELR_country_admin_regions = {"Rwanda":"county","Kenya":"subcounty","Ethiopia":"subcounty"}
         
-        # Where all of the cGAN histogram counts will be stored
-        cGAN_counts_path = f"{root_dir}/interface/view_forecasts/data"
-        
         # Where the cGAN 6h histogram counts will be stored
-        cGAN_counts_path_6h = f"{cGAN_counts_path}/counts_6h"
+        cGAN_counts_path_6h = f"{root_dir}/data/ifs+cgan_imerg_6h/histograms"
         
         # Where the cGAN 24h histogram counts will be stored
-        cGAN_counts_path_24h = f"{cGAN_counts_path}/counts_24h"
+        cGAN_counts_path_24h = f"{root_dir}/data/ifs+cgan_imerg_24h/histograms"
         
         
         # Download the IFS data
@@ -461,7 +454,7 @@ if __name__=='__main__':
                     f"{date_str} {time_str}."
                 )
 
-                # forecast_date.py now lives in the single ifs-cgan directory
+                # forecast_date.py now lives in the single code/ifs+cgan directory
                 run_dir = cGAN_forecast_script_path
 
                 # Required/common arguments
@@ -556,7 +549,7 @@ if __name__=='__main__':
 
             subprocess.run(
                 histogram_cmd,
-                cwd=root_dir,
+                cwd=run_dir,
                 check=True
             )
 
@@ -623,7 +616,7 @@ if __name__=='__main__':
                 "--accumulation",
                 str(accum_time_local)
             ],
-            cwd=root_dir,
+            cwd=cGAN_forecast_script_path,
             check=True
         )
         

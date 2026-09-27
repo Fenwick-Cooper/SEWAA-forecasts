@@ -637,7 +637,7 @@ async function init() {
 	
 	// If the region names are not loaded yet, then load them and wait for them to be loaded
 	// First argument is the directory, second argument is the file name.
-	await GANForecast[0].regionSpec.loadRegionNames("../boundaries", "regional_names.json");
+	await GANForecast[0].regionSpec.loadRegionNames("../../../data/country_boundaries", "regional_names.json");
 	// All point at the same regionSpec
 	// XXX Make according to validTimes.length
 	for (let i=1;i<7;i++) {

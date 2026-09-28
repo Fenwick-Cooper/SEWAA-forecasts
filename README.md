@@ -9,11 +9,11 @@ Scripts for operational rainfall forecasts, using the cGAN model, in the South E
 
 To use these scripts, Git and Conda are required. These are standard tools that can be downloaded from the internet, and have detailed instructions for downloading and installing them.
 
-For Windows, you can download Git from [here](XXX) and Conda from [here]().
+For Windows, you can download Git from [here](https://gitforwindows.org/) and Conda from [here](https://repo.anaconda.com/archive/Anaconda3-2026.07-1-Windows-x86_64.exe).
 
-For Mac, you can download Git from [here](XXX) and Conda from [here]().
+For Mac, you should already have Git installed (try `git version` in terminal to see if it is there already), but it can be downloaded [here](https://sourceforge.net/projects/git-osx-installer/files/git-2.23.0-intel-universal-mavericks.dmg/download?use_mirror=autoselect) if needed. You can download Conda from [here](https://repo.anaconda.com/archive/Anaconda3-2026.07-1-MacOSX-arm64.pkg).
 
-For Linux, you can download Git from [here](XXX) and Conda from [here](). 
+For Linux, you can download Git by running `sudo apt-get install git-all`, and download Conda from [here](https://www.anaconda.com/download/success?reg=skipped). 
 
 #### ECMWF data
 

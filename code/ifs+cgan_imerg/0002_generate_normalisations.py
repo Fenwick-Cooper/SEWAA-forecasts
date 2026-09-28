@@ -1,3 +1,62 @@
+"""
+Generate forecast normalisation data for configured experiment years.
+
+This script loads an experiment configuration from a YAML file, configures
+the environment variables required by the data-loading modules, selects the
+experiment-specific local configuration, and generates forecast
+normalisations for one or more years.
+
+The experiment configuration is read before importing ``read_config`` and
+``data`` because these modules depend on configuration values supplied
+through environment variables at import time.
+
+Usage
+-----
+Generate normalisations using the default years (2018--2021):
+
+    python generate_normalisations.py --config path/to/config.yaml
+
+Generate normalisations for specific years:
+
+    python generate_normalisations.py \
+        --config path/to/config.yaml \
+        --years 2019 2020 2021
+
+Arguments
+---------
+--config : str
+    Path to the experiment configuration YAML file.
+
+--years : int, optional
+    Years for which forecast normalisations should be generated.
+    Multiple years may be supplied. Defaults to 2018, 2019, 2020, and 2021.
+
+Configuration
+-------------
+The experiment YAML file is expected to define the following entries:
+
+    GENERAL.local_config_path
+    DATA.crop_to_bounds
+    DATA.bounds
+    DATA.all_fcst_fields
+    DATA.accumulated_fields
+    DATA.nonnegative_fields
+
+These values are exported through environment variables before importing
+configuration-dependent modules.
+
+Output
+------
+Normalisation files are written to the directory specified by
+``GENERAL.NORMALISATION_PATH`` in the selected local configuration.
+
+Raises
+------
+FileNotFoundError
+    If the local configuration file specified by
+    ``GENERAL.local_config_path`` does not exist.
+"""
+
 import argparse
 import os
 import yaml

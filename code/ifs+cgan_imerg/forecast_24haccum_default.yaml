@@ -1,3 +1,16 @@
+# =============================================================================
+# Default Configuration for 24-hour Accumulation Forecasts
+#
+# Defines the default model, predictor fields, data paths, and output location
+# used to generate cGAN forecasts for 6-hour precipitation accumulations.
+#
+# MODEL  - trained model location, checkpoint, and accumulation period
+# DATA   - spatial domain and IFS forecast predictor fields
+# INPUT  - input forecast, truth, constants, and normalisation data paths
+# OUTPUT - location for generated cGAN forecasts
+#
+# =============================================================================
+
 MODEL:
     folder: "../../models/ifs+cgan_imerg_24h"
     checkpoint: 105216

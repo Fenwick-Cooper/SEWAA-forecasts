@@ -1,14 +1,62 @@
-#!/usr/bin/env python
-# coding: utf-8
+"""
+Generate historical cGAN precipitation forecasts and CRPS evaluation data.
 
-# Big warning:
-# This is not a general-purpose forecast script.
-# This is for forecasting on the pre-defined 'ICPAC region' (e.g., the latitudes
-# and longitudes are hard-coded), and assumes the input forecast data starts at
-# time 0, with time steps of data.HOURS.
-# A more robust version of this script would parse the latitudes, longitudes, and
-# forecast time info from the input file.
-# The forecast data fields must match those defined in data.all_fcst_fields
+This script loads a trained cGAN generator and produces ensemble precipitation
+forecasts over a configured date range. Forecast inputs are loaded and
+normalised using the experiment configuration before being passed to the
+generator together with static fields and stochastic noise.
+
+For each forecast date, the script generates the requested number of ensemble
+members, compares them with the corresponding truth data, and calculates the
+Continuous Ranked Probability Score (CRPS). Results are written to NetCDF.
+
+The script can either save both the generated ensemble forecasts and CRPS, or
+save only the CRPS to reduce output storage requirements.
+
+Two configuration files are used:
+
+    forecast YAML
+        Defines the trained model, checkpoint, lead time, accumulation period,
+        date range, ensemble size, input/output paths, and output behaviour.
+
+    experiment YAML
+        Defines the experiment data fields, spatial domain, and local data
+        configuration required by the data-loading modules.
+
+Usage
+-----
+Run using the default configuration files:
+
+    python forecast.py
+
+Specify forecast and experiment configurations:
+
+    python forecast.py forecast.yaml config.yaml
+
+Arguments
+---------
+yaml_file : str, optional
+    Path to the forecast configuration YAML file.
+    Defaults to ``forecast.yaml``.
+
+config_file : str, optional
+    Path to the experiment configuration YAML file.
+    Defaults to ``config.yaml``.
+
+Output
+------
+For each available forecast date, a NetCDF file is written containing CRPS
+and, unless ``save_crps_only`` is enabled, the generated precipitation
+ensemble members.
+
+Notes
+-----
+Only trained GAN models are currently supported; VAE-GAN and deterministic
+models cannot be used with this script.
+
+Dates that are unavailable in the forecast dataset, or for which required
+forecast input files cannot be loaded, are skipped.
+"""
 
 import os
 import argparse

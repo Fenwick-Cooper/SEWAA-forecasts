@@ -1,2 +1,3 @@
+#If using the cGAN in downscaling mode
 downscaling_factor: 1  # increase in image size in each dimension
 steps: [1]  # list of integers that multiply to the downscaling factor; the generator will use UpSampling2D layers of these sizes, alternating with residual blocks.

@@ -1,3 +1,27 @@
+# =============================================================================
+# cGAN Experiment Configuration
+#
+# Defines the model architecture, training parameters, validation/evaluation
+# settings, and experiment-specific data domain.
+#
+# GENERAL       - local configuration and experiment type
+# DATA          - spatial domain and data-processing settings
+# MODEL         - neural network architecture settings
+# SETUP         - output/logging location
+# GENERATOR     - generator architecture and optimisation parameters
+# DISCRIMINATOR - discriminator architecture and optimisation parameters
+# TRAIN         - training years, sampling, loss, and batch settings
+# VAL           - validation settings used during training
+# EVAL          - evaluation and post-processing settings
+#
+# Paths and parameters should be updated for each experiment as required.
+# =============================================================================
+
+GENERAL:
+    local_config_path: "local_config.yaml"
+    mode: "GAN"  # choices 'GAN', 'VAEGAN', 'det'
+    problem_type: "normal"  # choices 'normal' (forecast to truth), 'autocoarsen' (coarsened truth to truth)
+
 GENERAL:
     local_config_path: "local_config.yaml"
     mode: "GAN"  # choices 'GAN', 'VAEGAN', 'det'

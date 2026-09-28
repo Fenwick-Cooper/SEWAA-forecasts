@@ -8,16 +8,15 @@
 #
 # Before use:
 # 
-#    conda activate tf215gpu
+#    conda activate sewaa-forecasts
 #
 # Usage examples:
+
+# Run todays forecasts for 6h and 24h accumulations, initialised at 0000
+#    python run_forecast.py
 #
 # Run todays 6h forecasts initialised at 0000
-#    python run_forecast.py
 #    python run_forecast.py --accumulation 6h
-#
-# Run the 6h forecasts for the 10th of February 2025 initialised at 1800
-#    python run_forecast.py --date 20250210 --time 1800
 #
 # Run the most recent 24h forecasts
 #    python run_forecast.py --accumulation 24h
@@ -25,9 +24,8 @@
 # Run the 24h forecasts for the 10th of February 2025
 #    python run_forecast.py --accumulation 24h --date 20250210
 #
-# Run todays 6h forecasts initialised at 0000 and delete the forecasts once
-# statistics have been computed
-#    python run_forecast.py --delete_forecasts Y
+# You can also use the options --n_ens, --keep_forecasts, --leadtime to edit which forecasts are run -- see README for details
+#
 
 import argparse
 import sys
@@ -47,7 +45,7 @@ def parseArguments():
 
  Before use:
  
-    conda activate tf215gpu
+    conda activate sewaa-forecasts
 
  Usage examples:
 

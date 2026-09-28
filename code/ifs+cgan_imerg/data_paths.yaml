@@ -1,4 +1,22 @@
-#Add your own data paths here if training
+# =============================================================================
+# Local Data Path Configuration
+#
+# Defines named data configurations used by the cGAN preprocessing, training,
+# and evaluation scripts. Each configuration specifies the locations of the
+# input datasets and generated preprocessing files.
+#
+# GENERAL:
+#   TRUTH_PATH         - observed/reference precipitation data
+#   FORECAST_PATH      - input forecast or hindcast data
+#   CONSTANTS_PATH     - static predictor fields
+#   NORMALISATION_PATH - forecast normalisation files
+#
+# TFRecords:
+#   tfrecords_path     - generated TFRecords used for model training
+#
+# Add or modify configurations as required for your data and environment.
+# =============================================================================
+
 IMERG_RAW:
     GENERAL:
         TRUTH_PATH: '/network/group/aopp/predict/AWH024_COOPERNATH_IFS/IFS/IMERG_V07/ICPAC_region/24h'

@@ -1,14 +1,74 @@
-#!/usr/bin/env python
-# coding: utf-8
+"""
+Generate cGAN ensemble precipitation forecasts from IFS forecast data.
 
-# Big warning:
-# This is not a general-purpose forecast script.
-# This is for forecasting on the pre-defined 'ICPAC region' (e.g., the latitudes
-# and longitudes are hard-coded), and assumes the input forecast data starts at
-# time 0, with time steps of data.HOURS.
-# A more robust version of this script would parse the latitudes, longitudes, and
-# forecast time info from the input file.
-# The forecast data fields must match those defined in data.all_fcst_fields
+This script loads a trained cGAN generator and produces probabilistic
+precipitation forecasts for specified lead times. IFS ensemble mean and
+standard-deviation fields are preprocessed and normalised before being
+passed to the generator together with static fields and stochastic noise.
+
+Both 6-hour and 24-hour precipitation accumulations are supported. Generated
+ensemble members are written to a NetCDF file, with optional CRPS calculation
+when corresponding truth data are available.
+
+The forecast configuration YAML specifies the trained model, predictor
+fields, spatial domain, input data paths, normalisation data, and output
+location.
+
+Usage
+-----
+Generate the default 6-hour forecasts:
+
+    python forecast.py --date YYYYMMDD
+
+Generate forecasts for a specific initialisation time and lead times:
+
+    python forecast.py \
+        --date YYYYMMDD \
+        --time 0600 \
+        --leadtime 30 36 42 48 \
+        --accumulation 6
+
+Generate forecasts and calculate CRPS:
+
+    python forecast.py \
+        --date YYYYMMDD \
+        --accumulation 6 \
+        --save_crps
+
+Arguments
+---------
+--date : str
+    Forecast initialisation date in YYYYMMDD format.
+
+--time : str, optional
+    Forecast initialisation time (0000, 0600, 1200, or 1800 UTC).
+    Defaults to 0000.
+
+--leadtime : int, optional
+    Forecast lead times in hours. If omitted, defaults are selected according
+    to the accumulation period.
+
+--accumulation : {6, 24}, optional
+    Forecast accumulation period in hours. Defaults to 6.
+
+--fcst_yaml_file : str, optional
+    Path to the forecast configuration YAML file. If omitted, the default
+    configuration corresponding to the accumulation period is used.
+
+--save_crps
+    Calculate and save CRPS using the configured truth dataset.
+
+--n_ens : int, optional
+    Number of cGAN ensemble members to generate. Defaults to 1000.
+
+Notes
+-----
+The input forecast file must contain the forecast fields specified by
+``DATA.all_fcst_fields`` in the forecast configuration.
+
+The script assumes forecast data are available at 6-hour intervals and that
+the required lead times and spatial domain are present in the input file.
+"""
 
 import os
 import argparse

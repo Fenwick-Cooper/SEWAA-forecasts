@@ -4,8 +4,11 @@
 #
 # To run this script:
 #
-#       conda activate tf215gpu
+#       conda activate sewaa-forecasts
 #       python start_forecasting.py
+# To leave this script running continuously:
+#       conda activate sewaa-forecasts
+#       nohup python -u start_forecasting.py > start_forecasting_log.log 2>&1 &
 #
 # run_forecasts.py checks for existing files.
 
@@ -98,7 +101,7 @@ if __name__=='__main__':
 
 To run this script:
 
-      conda activate tf215gpu
+      conda activate sewaa-forecasts
       python start_forecasting.py
     """, formatter_class=argparse.RawTextHelpFormatter)
     parser.parse_args()

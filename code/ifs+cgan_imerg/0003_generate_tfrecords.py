@@ -1,3 +1,75 @@
+"""
+Generate and validate TFRecord files for cGAN training.
+
+This script loads an experiment configuration from a YAML file, configures
+the environment variables required by the data-processing modules, selects
+the experiment-specific local configuration, and generates compressed
+TFRecord files for one or more years.
+
+The experiment and local configurations are established before importing
+``read_config`` and ``tfrecords_generator`` because these modules depend on
+configuration values supplied through environment variables at import time.
+
+After generation, the script inspects each TFRecord file and reports the
+number of records, file size, feature keys in the first record, and the
+type and length of each feature. Files that cannot be read or parsed are
+reported as invalid.
+
+Usage
+-----
+Generate TFRecords using the default years (2018--2021):
+
+    python generate_tfrecords.py --config path/to/config.yaml
+
+Generate TFRecords for specific years:
+
+    python generate_tfrecords.py \
+        --config path/to/config.yaml \
+        --years 2019 2020 2021
+
+Arguments
+---------
+--config : str
+    Path to the experiment configuration YAML file.
+
+--years : int, optional
+    Years for which TFRecords should be generated. Multiple years may be
+    supplied. Defaults to 2018, 2019, 2020, and 2021.
+
+Configuration
+-------------
+The experiment YAML file is expected to define the following entries:
+
+    GENERAL.local_config_path
+    DATA.crop_to_bounds
+    DATA.bounds
+    DATA.all_fcst_fields
+    DATA.accumulated_fields
+    DATA.nonnegative_fields
+    DATA.leadtime
+    DATA.accumulation
+
+``DATA.accumulation`` must be either 6 or 24 hours.
+
+Output
+------
+TFRecord files are written to the directory specified by
+``TFRecords.tfrecords_path`` in the selected local configuration.
+
+For each generated file, the script prints basic validation information,
+including record count, file size, and the structure of the first
+serialized ``tf.train.Example``.
+
+Raises
+------
+FileNotFoundError
+    If the local configuration file specified by
+    ``GENERAL.local_config_path`` does not exist.
+
+ValueError
+    If ``DATA.accumulation`` is not 6 or 24 hours.
+"""
+
 import argparse
 import glob
 import os

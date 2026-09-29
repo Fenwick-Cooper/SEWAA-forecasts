@@ -53,7 +53,7 @@ DATA:
 INPUT:
     truth_folder: '/to/edit/if/you/want/to/calculate/crps'
     fcst_folder: '../../data/IFS_forecast_data'
-    constants_folder: '../../data/IFS_forecast_data/constants'
+    constants_folder: '../../data/constants'
     normalisation_folder: '../../models/ifs+cgan_imerg_24h'
 
 OUTPUT:

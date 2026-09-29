@@ -83,7 +83,7 @@ ZAM_MAD_HIND_6_MULTILEAD:
 #     GENERAL:
 #         TRUTH_PATH: '/to/edit/if/you/want/to/calculate/crps'
 #         FORECAST_PATH: '../../data/IFS_forecast_data'
-#         CONSTANTS_PATH: '../../data/IFS_forecast_data/constants'
+#         CONSTANTS_PATH: '../../data/constants'
 #         NORMALISATION_PATH: ../../data/IFS_forecast_data/normalisations/6h_accumulations'
         
 #     TFRecords:
@@ -93,7 +93,7 @@ ZAM_MAD_HIND_6_MULTILEAD:
 #     GENERAL:
 #         TRUTH_PATH: '/to/edit/if/you/want/to/calculate/crps'
 #         FORECAST_PATH: '../../data/IFS_forecast_data'
-#         CONSTANTS_PATH: '../../data/IFS_forecast_data/constants'
+#         CONSTANTS_PATH: '../../data/constants'
 #         NORMALISATION_PATH: ../../data/IFS_forecast_data/normalisations/24h_accumulations'
         
 #     TFRecords:

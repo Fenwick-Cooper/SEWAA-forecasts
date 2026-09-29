@@ -8,9 +8,7 @@
 
 data/**
 !data/IFS_forecast_data/
-!data/IFS_forecast_data/constants/
-!data/IFS_forecast_data/constants/*
-
+!data/constants/
 !data/country_boundaries/
 !data/country_boundaries/*
 

@@ -93,13 +93,6 @@ This should return:
 
 You have now successfully downloaded the code and can start forecasting!
 
-Alternatively, if you are not able to use Git, you can download the code as a _.zip_ file.
-
-- Go to https://github.com/Fenwick-Cooper/SEWAA-forecasts/South_East_Africa
-- Click on the big green button labelled "<> Code "
-- Select "Download ZIP"
-- Uncompress the SEWAA-forecasts-main.zip into the folder where you would like to place the forecasting scipts
-
 ## Updating an installation
 
 #### For people who use Git:
@@ -110,13 +103,6 @@ Navigate to the folder _SEWAA-forecasts_. Once inside the folder, run:
 
 This will "pull" all updates from the GitHub, whilst maintaining your data in the _data_ directory.
 
-#### For people downloading as a _.zip_:
-
-Download the latest version by following the instructions above.
-To keep your data move the following directories:
-
-Copy all folders from the *new* _SEWAA-forecasts_ folder into the current _SEWAA-forecasts_ folder, except _data_.
-
 ## How to make forecasts
 
 #### To make a single forecast
@@ -126,9 +112,7 @@ To get usage information run:
 
 	python run_forecast.py --help
 
-This shows the options you can change when running the script:
-
-
+This shows the options you can change when running the script.
 
 To run the script using the default options:
 

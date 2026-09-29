@@ -44,7 +44,9 @@ Install tensorflow:
 	python -m pip install tensorflow==2.15
 
 Then install other packages that are required (you can copy and paste these all in one go if you want):
-
+	
+	pip install scipy==1.17
+	pip install numpy==1.26.4
 	pip install numba
 	pip install matplotlib
 	pip install seaborn
@@ -52,7 +54,7 @@ Then install other packages that are required (you can copy and paste these all 
 	pip install jupyter
 	pip install xarray
 	pip install netcdf4
-	pip install scikit-learn
+	pip install scikit-learn==1.5.2
 	pip install cfgrib
 	pip install dask
 	pip install tqdm
@@ -64,6 +66,7 @@ Then install other packages that are required (you can copy and paste these all 
 	pip install flake8
 	pip install regionmask
 	pip install schedule
+	conda install conda-forge::curl
 
 Check that tensor flow is working:
 

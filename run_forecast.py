@@ -34,6 +34,7 @@ import subprocess
 import pathlib
 import datetime
 import platform
+from code.downloads import ensure_netcdf
 
 
 # Parse arguments to this script
@@ -321,89 +322,47 @@ if __name__=='__main__':
         
         
         # Download the IFS data
-
+        pathlib.Path(IFS_data_path).parent.mkdir(exist_ok=True)
         pathlib.Path(IFS_data_path).mkdir(exist_ok=True)
 
         file_name = f"IFS_{date_str}_{hour:02d}Z.nc"
 
-        if os.path.isfile(f"{IFS_data_path}/{file_name}"):
-            print(f"{IFS_data_path}/{file_name} already exists.")
+        destination = os.path.join(
+            IFS_data_path,
+            file_name
+        )
 
-        else:
-            if platform.system() == "Windows":
-                oblivion = "nul"
-            else:
-                oblivion = "/dev/null"
-
-            file_URL = (
-                f"https://rain.physics.ox.ac.uk/South_East_Africa/"
-                f"IFS_forecast_data/{year}/{file_name}"
-            )
-
-            print(f"Checking University of Oxford for {file_name}")
-
-            return_value = subprocess.run(
-                ["curl", "-Isw", "%{http_code}", file_URL, "-o", oblivion],
-                capture_output=True,
-                text=True
-            )
-
-            if return_value.stdout == "200":
-
-                print(
-                    f"Copying {accum_time_local}h accumulation data, "
-                    f"{file_name}, from University of Oxford."
-                )
-                print(f"to {IFS_data_path}/.")
-
-                subprocess.run([
-                    "curl",
-                    file_URL,
-                    "-o",
-                    f"{IFS_data_path}/{file_name}"
-                ])
-
-            else:
-
-                print(
-                    f"Unable to copy {file_name} from {file_URL}. "
-                    f"HTTP error {return_value.stdout}."
-                )
-
-                file_URL = (
-                    f"http://megacorr.dynu.net/South_East_Africa/IFS_forecast_data/"
+        urls = [
+            (
+                "University of Oxford",
+                (
+                    f"https://rain.physics.ox.ac.uk/South_East_Africa/"
                     f"IFS_forecast_data/{year}/{file_name}"
-                )
+                ),
+            ),
+            (
+                "Fenwick's home",
+                (
+                    f"http://megacorr.dynu.net/South_East_Africa/"
+                    f"IFS_forecast_data/IFS_forecast_data/{year}/{file_name}"
+                ),
+            ),
+        ]
 
-                print(f"Checking Fenwick's home for {file_name}")
+        print(
+            f"Getting {accum_time_local}h accumulation data, "
+            f"{file_name}."
+        )
 
-                return_value = subprocess.run(
-                    ["curl", "-Isw", "%{http_code}", file_URL, "-o", oblivion],
-                    capture_output=True,
-                    text=True
-                )
+        success = ensure_netcdf(
+            destination,
+            urls,
+            timeout=3600,
+        )
 
-                if return_value.stdout == "200":
-
-                    print(
-                        f"Copying {accum_time_local}h accumulation data, "
-                        f"{file_name}, from Fenwick's home."
-                    )
-                    print(f"to {IFS_data_path}/.")
-
-                    subprocess.run([
-                        "curl",
-                        file_URL,
-                        "-o",
-                        f"{IFS_data_path}/{file_name}"
-                    ])
-
-                else:
-                    print(
-                        f"Unable to copy {file_name} from {file_URL}. "
-                        f"HTTP error {return_value.stdout}."
-                    )
-                    sys.exit()
+        if not success:
+            print(f"Unable to obtain {file_name}.")
+            sys.exit(1)
         
         
         # Run cGAN on this data

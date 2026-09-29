@@ -13,12 +13,7 @@
 
 MODEL:
     folder: "../../models/ifs+cgan_imerg_6h"
-    checkpoint: XXXX
-    accumulation: 6
-
-MODEL:
-    folder: "../../models/ifs+cgan_imerg_6h"
-    checkpoint: XXXX
+    checkpoint: 26880
     accumulation: 6
 
 DATA:

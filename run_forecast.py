@@ -132,11 +132,10 @@ def parseArguments():
 
     args = parser.parse_args()
     
-    # Parse the accumulation
-    # Parse accumulation periods
+    # Parse accumulation periods.
+    # The default is selected after parsing the initialisation time.
     if args.accumulation is None:
-        # Default: run both
-        accumulation_times = [6, 24]
+        accumulation_times = None
     else:
         accumulation_times = []
 
@@ -170,16 +169,16 @@ def parseArguments():
         day = d.day
     
     # Parse the time
-    if (args.time is not None):
-    
-        if (len(args.time) != 4):
+    if args.time is not None:
+
+        if len(args.time) != 4:
             print("ERROR: Incorrect time.")
             parser.print_help()
             sys.exit()
-            
+
         hour = int(args.time[0:2])
         minute = int(args.time[2:4])
-        
+
         # All forecasts must initialise on a 6-hour boundary
         if (hour not in [0, 6, 12, 18]) or (minute != 0):
             print("ERROR: Incorrect time.")
@@ -190,21 +189,31 @@ def parseArguments():
             parser.print_help()
             sys.exit()
 
-        # 24h forecasts currently only support 00Z
-        if 24 in accumulation_times and hour != 0:
-            print("ERROR: Incorrect time.")
-            print(
-                "       24h accumulation forecasts are only "
-                "available for initialisation at 0000."
-            )
-            parser.print_help()
-            sys.exit()
-                
     else:
-        
+
         # Default 0000
         hour = 0
         minute = 0
+
+
+    # Select default accumulation periods based on initialisation time.
+    # 24h forecasts are only available at 00Z.
+    if accumulation_times is None:
+        if hour == 0:
+            accumulation_times = [6, 24]
+        else:
+            accumulation_times = [6]
+
+
+    # 24h forecasts currently only support 00Z
+    if 24 in accumulation_times and hour != 0:
+        print("ERROR: Incorrect time.")
+        print(
+            "       24h accumulation forecasts are only "
+            "available for initialisation at 0000."
+        )
+        parser.print_help()
+        sys.exit()
         
     # Parse delete_forecasts
     delete_forecasts = True  # Default

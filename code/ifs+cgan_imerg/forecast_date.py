@@ -526,7 +526,7 @@ for valid_time_num, current_leadtime in enumerate(leadtime):
         ens_cgan_preds_stacked = np.stack(ens_cgan_preds, axis=0)
         
         #load relevant truth data
-        truth_data, _ = load_truth_and_mask(d.strftime('%Y%m%d'), leadtime=current_leadtime, log_precip=log_precip, truth_path=truth_input_folder)
+        truth_data, _ = load_truth_and_mask(d.strftime('%Y%m%d'), hour=hour, leadtime=current_leadtime, log_precip=log_precip, truth_path=truth_input_folder)
         if truth_data.ndim == 3 and truth_data.shape[0] == 1:
             truth_data = truth_data[0]
         print(f"shape truth = {np.shape(truth_data)}")

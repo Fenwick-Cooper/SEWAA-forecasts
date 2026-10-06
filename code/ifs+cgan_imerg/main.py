@@ -48,9 +48,16 @@ if __name__ == "__main__":
     else:
         leadtime = list(leadtime)
     accumulation = setup_params["DATA"]["accumulation"]
+    
+    time = setup_params["DATA"]["time"]
+    if isinstance(time, int):
+            time = [time]
+    else:
+        time = list(time)
 
-    os.environ["LEADTIME"] = str(leadtime[0])
+    os.environ["LEADTIME"] = json.dumps(leadtime)
     os.environ["ACCUMULATION"] = str(accumulation)
+    os.environ["TIME"] = json.dumps(time)
 
     if not os.path.isabs(local_config_path):
         local_config_path = os.path.join(

@@ -21,7 +21,8 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 path = os.path.dirname(os.path.abspath(__file__))
 ds_fac = read_config.read_downscaling_factor()["downscaling_factor"]
 
-LEADTIME = int(os.environ.get("LEADTIME", 30))
+LEADTIME = json.loads(os.environ.get("LEADTIME", "[30]"))
+TIME = json.loads(os.environ.get("TIME", "[0]"))
 ACCUMULATION = int(os.environ.get("ACCUMULATION", 24))
 
 def setup_inputs(*,
@@ -30,6 +31,7 @@ def setup_inputs(*,
                  downscaling_steps,
                  val_years,
                  autocoarsen,
+                 hours,
                  leadtime,
                  accumulation,
                  input_channels,
@@ -58,9 +60,10 @@ def setup_inputs(*,
     print('Loading full sized image dataset')
     _, data_gen_valid = setupdata.setup_data(
         val_years=val_years,
+        hours=hours,
         autocoarsen=autocoarsen,
         leadtime=leadtime,
-        accumulation=accumulation
+        accumulation=accumulation,
     )
     return gen, data_gen_valid
 
@@ -335,6 +338,7 @@ def evaluate_multiple_checkpoints(*,
                                   noise_channels,
                                   padding,
                                   ensemble_size,
+                                  hours,
                                   leadtime,
                                   accumulation):
 
@@ -345,6 +349,7 @@ def evaluate_multiple_checkpoints(*,
                                        downscaling_steps=df_dict["steps"],
                                        val_years=val_years,
                                        autocoarsen=autocoarsen,
+                                       hours=hours,
                                        leadtime=leadtime,
                                        accumulation=accumulation,
                                        input_channels=input_channels,

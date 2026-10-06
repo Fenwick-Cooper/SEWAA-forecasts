@@ -27,11 +27,21 @@ DATA:
     bounds: [-2.98, 28.52, -1.02, 30.98] #bounds: [lat_min, lon_min, lat_max, lon_max]
     leadtime: 30
     accumulation: 24
+    time: 0
     all_fcst_fields:
+        - mucape
+        - cp
+        - tcc
+        - sp
+        - ssr
+        - t2m
+        - tciw
+        - tclw
+        - tcw
         - tcwv
         - tp
-        - sp
-        - t2m
+        - u700
+        - v700
 
     accumulated_fields:
         - cp

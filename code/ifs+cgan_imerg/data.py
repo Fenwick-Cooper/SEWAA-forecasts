@@ -52,7 +52,8 @@ nonnegative_fields = json.loads(
     os.environ.get("CGAN_NONNEGATIVE_FIELDS", "[]")
 )
 
-LEADTIME = int(os.environ.get("LEADTIME", 30))
+LEADTIME = json.loads(os.environ.get("LEADTIME", "[30]"))
+TIME = json.loads(os.environ.get("TIME", "[0]"))
 ACCUMULATION = int(os.environ.get("ACCUMULATION", 24))
 
 # utility function; generator to iterate over a range of dates
@@ -76,6 +77,7 @@ def logprec(y, log_precip=False):
 
 
 def get_dates(year,
+              hours=TIME,
               leadtime=LEADTIME,
               accumulation=ACCUMULATION):
     """
@@ -120,6 +122,20 @@ def get_dates(year,
             f"Unsupported accumulation period: {accumulation} hours"
         )
 
+    if np.isscalar(hours):
+        hours = [int(hours)]
+    else:
+        hours = [int(x) for x in hours]
+
+    if not hours:
+        raise ValueError("At least one initialisation hour must be supplied")
+
+    for hour in hours:
+        if hour not in (0, 6, 12, 18):
+            raise ValueError(
+                f"Unsupported forecast initialisation hour: {hour}"
+            )
+    
     start_date = datetime.date(year, 1, 1)
     end_date = datetime.date(year + 1, 1, 1)
 
@@ -127,55 +143,60 @@ def get_dates(year,
 
     for curdate in daterange(start_date, end_date):
 
-        # Forecasts initialise at 00 UTC
-        fcst_dt = datetime.datetime.combine(
-            curdate,
-            datetime.time(0, 0)
-        )
-
         all_truth_exists = True
 
-        for lt in leadtime:
+        for hour in hours:
 
-            # Lead time denotes the START of the target interval
-            target_start_dt = fcst_dt + datetime.timedelta(
-                hours=lt
+            fcst_dt = datetime.datetime.combine(
+                curdate,
+                datetime.time(hour, 0)
             )
 
-            if accumulation == 24:
-                # 24-hour truth files use the _06 naming convention
-                truth_fname = target_start_dt.strftime("%Y%m%d_06")
+            for lt in leadtime:
 
-            elif accumulation == 6:
-                # 6-hour truth files are timestamped by the
-                # start of the accumulation interval
-                truth_fname = target_start_dt.strftime("%Y%m%d_%H")
+                # Start of target accumulation interval
+                target_start_dt = (
+                    fcst_dt
+                    + datetime.timedelta(hours=lt)
+                )
 
-            truth_path = os.path.join(
-                TRUTH_PATH,
-                str(target_start_dt.year),
-                f"{truth_fname}.nc"
-            )
+                truth_fname = target_start_dt.strftime(
+                    "%Y%m%d_%H"
+                )
 
-            if not os.path.exists(truth_path):
-                all_truth_exists = False
+                truth_path = os.path.join(
+                    TRUTH_PATH,
+                    str(target_start_dt.year),
+                    f"{truth_fname}.nc"
+                )
+
+                if not os.path.exists(truth_path):
+                    all_truth_exists = False
+                    break
+
+            if not all_truth_exists:
                 break
 
         if all_truth_exists:
-            valid_dates.append(curdate.strftime("%Y%m%d"))
+            valid_dates.append(
+                curdate.strftime("%Y%m%d")
+            )
 
     return valid_dates
 
 def load_truth_and_mask(date,
                         hour=0,
                         leadtime=LEADTIME,
+                        accumulation=ACCUMULATION,
                         log_precip=False,
                         truth_path=None):
     '''
     Returns a single (truth, mask) item of data.
     Parameters:
         date: forecast start date
-        time_idx: forecast 'valid time' array index
+        hour: forecast start hour
+        leadtime: lead time in hours
+        accumulation: accumulation period in hours
         log_precip: whether to apply log10(1+x) transformation
     '''
     if truth_path is None:
@@ -275,6 +296,7 @@ def load_hires_constants(batch_size=1, constants_path=None):
 
 def load_fcst_truth_batch(dates_batch,
                           leadtime_batch,
+                          hours_batch=None,
                           fcst_fields=all_fcst_fields,
                           accumulation=ACCUMULATION,
                           log_precip=False,
@@ -313,12 +335,22 @@ def load_fcst_truth_batch(dates_batch,
     batch_y = []
     batch_mask = []
 
+    n = len(dates_batch)
+
     if len(dates_batch) != len(leadtime_batch):
         raise ValueError(
             "dates_batch and leadtime_batch must have the same length"
         )
 
-    for date, leadtime in zip(dates_batch, leadtime_batch):
+    if hours_batch is None:
+        hours_batch = np.zeros(n, dtype=int)
+
+    if len(hours_batch) != n:
+        raise ValueError(
+            "dates_batch and hours_batch must have the same length"
+        )
+
+    for date, hour, leadtime in zip(dates_batch, hours_batch, leadtime_batch):
 
         leadtime = int(leadtime)
 
@@ -326,6 +358,7 @@ def load_fcst_truth_batch(dates_batch,
             load_fcst_stack(
                 fcst_fields,
                 date,
+                hour=hour,
                 leadtime=leadtime,
                 accumulation=accumulation,
                 log_precip=log_precip,
@@ -336,6 +369,8 @@ def load_fcst_truth_batch(dates_batch,
 
         truth, mask = load_truth_and_mask(
             date,
+            hour=hour,
+            accumulation=accumulation,
             leadtime=leadtime,
             log_precip=log_precip
         )
@@ -579,6 +614,7 @@ def load_fcst(field,
 
 def load_fcst_stack(fields,
                     date,
+                    hour=0,
                     leadtime=LEADTIME,
                     accumulation=ACCUMULATION,
                     log_precip=False,
@@ -591,7 +627,7 @@ def load_fcst_stack(fields,
     '''
     field_arrays = []
     for f in fields:
-        field_arrays.append(load_fcst(f, date, leadtime=leadtime, accumulation=accumulation, log_precip=log_precip, norm=norm, fcst_norm_dict=fcst_norm_dict))
+        field_arrays.append(load_fcst(f, date, hour=hour, leadtime=leadtime, accumulation=accumulation, log_precip=log_precip, norm=norm, fcst_norm_dict=fcst_norm_dict))
     return np.concatenate(field_arrays, axis=-1)
 
 

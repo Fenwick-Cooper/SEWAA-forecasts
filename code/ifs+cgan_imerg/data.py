@@ -167,6 +167,7 @@ def get_dates(year,
     return valid_dates
 
 def load_truth_and_mask(date,
+                        hour=0,
                         leadtime=LEADTIME,
                         log_precip=False,
                         truth_path=None):
@@ -187,7 +188,7 @@ def load_truth_and_mask(date,
         )
     
     # convert date and time_idx to get the correct truth file
-    fcst_date = datetime.datetime.strptime(date, "%Y%m%d")
+    fcst_date = datetime.datetime.strptime(date, "%Y%m%d") + datetime.timedelta(hours=int(hour))
     valid_dt = fcst_date + datetime.timedelta(hours=leadtime)
     year = str(valid_dt.year)
     fname = valid_dt.strftime('%Y%m%d_%H')

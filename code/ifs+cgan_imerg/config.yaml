@@ -22,14 +22,43 @@ GENERAL:
     mode: "GAN"  # choices 'GAN', 'VAEGAN', 'det'
     problem_type: "normal"  # choices 'normal' (forecast to truth), 'autocoarsen' (coarsened truth to truth)
 
-GENERAL:
-    local_config_path: "local_config.yaml"
-    mode: "GAN"  # choices 'GAN', 'VAEGAN', 'det'
-    problem_type: "normal"  # choices 'normal' (forecast to truth), 'autocoarsen' (coarsened truth to truth)
-
 DATA:
     crop_to_bounds: True
     bounds: [-2.98, 28.52, -1.02, 30.98] #bounds: [lat_min, lon_min, lat_max, lon_max]
+    leadtime: 30
+    accumulation: 24
+    all_fcst_fields:
+        - mucape
+        - cp
+        - tcc
+        - sp
+        - ssr
+        - t2m
+        - tciw
+        - tclw
+        - tcw
+        - tcwv
+        - tp
+        - u700
+        - v700
+
+    accumulated_fields:
+        - cp
+        - ssr
+        - tp
+
+    nonnegative_fields:
+        - mucape
+        - cp
+        - tcc
+        - sp
+        - ssr
+        - t2m
+        - tciw
+        - tclw
+        - tcw
+        - tcwv
+        - tp
     
 MODEL:
     architecture: "forceconv"  # choices 'normal', 'forceconv', 'forceconv-long'

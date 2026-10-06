@@ -210,6 +210,7 @@ if __name__ == "__main__":
 
         batch_gen_train, data_gen_valid = setupdata.setup_data(
             train_years=train_years,
+            hours=time,
             val_years=val_years,
             autocoarsen=autocoarsen,
             weights=training_weights,

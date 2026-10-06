@@ -210,7 +210,7 @@ def _float_feature(list_of_floats):  # float32
 def write_data(year,
                folder=records_folder,
                fcst_fields=all_fcst_fields,
-               time=0,
+               hours=0,
                leadtime=30,
                accumulation=24,
                img_chunk_width=DEFAULT_FCST_SHAPE[0],  # controls size of subsampled image
@@ -249,7 +249,7 @@ def write_data(year,
 
     dgc = DataGeneratorFull(
         dates,
-        time,
+        hours,
         fcst_fields=fcst_fields,
         leadtime=leadtime,
         accumulation=accumulation,

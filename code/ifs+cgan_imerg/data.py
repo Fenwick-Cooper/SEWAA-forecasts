@@ -77,65 +77,53 @@ def logprec(y, log_precip=False):
 
 
 def get_dates(year,
-              hours=TIME,
               leadtime=LEADTIME,
               accumulation=ACCUMULATION):
     """
-    Return forecast start dates for which the corresponding truth data exists.
+    Return candidate forecast start dates.
 
-    `leadtime` may be either:
-        - a single integer lead time, or
-        - an iterable of lead times.
+    A date is retained if truth exists for all requested lead times
+    relative to the 00 UTC forecast initialisation.
 
-    If multiple lead times are supplied, a date is returned only if truth
-    exists for ALL requested lead times.
+    Availability of individual forecast initialisation hours
+    (00, 06, 12, 18 UTC) is NOT checked here. Those combinations
+    are constructed by DataGenerator and unavailable samples are
+    skipped when loaded.
 
-    Each lead time denotes the START of the target accumulation interval.
+    `leadtime` denotes the START of the target accumulation interval.
 
     For example:
-        leadtime=30, accumulation=6
-        -> target interval is +30 h to +36 h
-        -> truth file is timestamped at +30 h
+        leadtime=30
+
+        forecast initialisation: 00 UTC
+        truth timestamp:         +30 h
 
     Dates are returned as YYYYMMDD strings.
     """
 
-    # Allow both:
-    #     leadtime=30
-    # and:
-    #     leadtime=[6, 12, 18, ..., 144]
     if np.isscalar(leadtime):
         leadtime = [int(leadtime)]
     else:
         leadtime = [int(x) for x in leadtime]
 
     if not leadtime:
-        raise ValueError("At least one lead time must be supplied")
+        raise ValueError(
+            "At least one lead time must be supplied"
+        )
 
     for lt in leadtime:
-        assert lt >= 0
-        assert lt <= 168
-        assert lt % HOURS == 0
+        if lt < 0 or lt > 168 or lt % HOURS != 0:
+            raise ValueError(
+                f"Invalid lead time: {lt}. "
+                f"Lead times must be multiples of {HOURS} "
+                "between 0 and 168 hours."
+            )
 
     if accumulation not in (6, 24):
         raise ValueError(
             f"Unsupported accumulation period: {accumulation} hours"
         )
 
-    if np.isscalar(hours):
-        hours = [int(hours)]
-    else:
-        hours = [int(x) for x in hours]
-
-    if not hours:
-        raise ValueError("At least one initialisation hour must be supplied")
-
-    for hour in hours:
-        if hour not in (0, 6, 12, 18):
-            raise ValueError(
-                f"Unsupported forecast initialisation hour: {hour}"
-            )
-    
     start_date = datetime.date(year, 1, 1)
     end_date = datetime.date(year + 1, 1, 1)
 
@@ -143,38 +131,34 @@ def get_dates(year,
 
     for curdate in daterange(start_date, end_date):
 
+        # get_dates only establishes candidate dates.
+        # Individual initialisation hours are checked when loaded.
+        fcst_dt = datetime.datetime.combine(
+            curdate,
+            datetime.time(0, 0)
+        )
+
         all_truth_exists = True
 
-        for hour in hours:
+        for lt in leadtime:
 
-            fcst_dt = datetime.datetime.combine(
-                curdate,
-                datetime.time(hour, 0)
+            target_start_dt = (
+                fcst_dt
+                + datetime.timedelta(hours=lt)
             )
 
-            for lt in leadtime:
+            truth_fname = target_start_dt.strftime(
+                "%Y%m%d_%H"
+            )
 
-                # Start of target accumulation interval
-                target_start_dt = (
-                    fcst_dt
-                    + datetime.timedelta(hours=lt)
-                )
+            truth_path = os.path.join(
+                TRUTH_PATH,
+                str(target_start_dt.year),
+                f"{truth_fname}.nc"
+            )
 
-                truth_fname = target_start_dt.strftime(
-                    "%Y%m%d_%H"
-                )
-
-                truth_path = os.path.join(
-                    TRUTH_PATH,
-                    str(target_start_dt.year),
-                    f"{truth_fname}.nc"
-                )
-
-                if not os.path.exists(truth_path):
-                    all_truth_exists = False
-                    break
-
-            if not all_truth_exists:
+            if not os.path.exists(truth_path):
+                all_truth_exists = False
                 break
 
         if all_truth_exists:

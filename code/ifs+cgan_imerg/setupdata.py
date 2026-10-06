@@ -1,12 +1,13 @@
 import gc
+import json
 import os
 
 from data import all_fcst_fields
 from tfrecords_generator import DataGenerator
 
-LEADTIME = int(os.environ.get("LEADTIME", 30))
+LEADTIME = json.loads(os.environ.get("LEADTIME", "[30]"))
+TIME = json.loads(os.environ.get("TIME", "[0]"))
 ACCUMULATION = int(os.environ.get("ACCUMULATION", 24))
-
 
 # Incredibly slim wrapper around tfrecords_generator.DataGenerator.  Can probably remove...
 def setup_batch_gen(train_years,

@@ -25,9 +25,9 @@ GENERAL:
 DATA:
     crop_to_bounds: False
     bounds: [-2.98, 28.52, -1.02, 30.98] #bounds: [lat_min, lon_min, lat_max, lon_max]
-    leadtime: 30
+    leadtime: [30, 54]
     accumulation: 24
-    time: 0
+    time: [0, 6, 12, 18]
     all_fcst_fields:
         - mucape
         - cp

@@ -23,24 +23,15 @@ GENERAL:
     problem_type: "normal"  # choices 'normal' (forecast to truth), 'autocoarsen' (coarsened truth to truth)
 
 DATA:
-    crop_to_bounds: True
+    crop_to_bounds: False
     bounds: [-2.98, 28.52, -1.02, 30.98] #bounds: [lat_min, lon_min, lat_max, lon_max]
     leadtime: 30
     accumulation: 24
     all_fcst_fields:
-        - mucape
-        - cp
-        - tcc
-        - sp
-        - ssr
-        - t2m
-        - tciw
-        - tclw
-        - tcw
         - tcwv
         - tp
-        - u700
-        - v700
+        - sp
+        - t2m
 
     accumulated_fields:
         - cp
@@ -65,12 +56,12 @@ MODEL:
     padding: "reflect"  # convolution padding: 'same', 'reflect', or 'symmetric'
         
 SETUP: #MW: When you train the model, the results go into this folder
-    log_folder: "/path/to/log/folder"
+    log_folder: "/home/m/matthewwright/Fatima_cgan_test_logs"
 
 GENERATOR:
     #MW: Currently set to these values as they worked for prev. experiments
     #MW: Reduce to 64 or 32 from 128 for faster iteration
-    filters_gen: 256  # generator network width -- related to size of neural network (larger -> slower and better)
+    filters_gen: 16  # generator network width -- related to size of neural network (larger -> slower and better)
     #MW: 4 from trial and error -- leave at 4 for now
     noise_channels: 4  # only used for GAN
     latent_variables: 50  # latent variables per pixel; only used for VAEGAN
@@ -79,14 +70,14 @@ GENERATOR:
 
 DISCRIMINATOR:
     #MW: Currently set to these values as they worked for prev. experiments
-    filters_disc: 512  # discriminator network width -- related to size of neural network (larger -> slower and better)
+    filters_disc: 32  # discriminator network width -- related to size of neural network (larger -> slower and better)
     #MW: Too small = takes longer; too large = blows up
     learning_rate_disc: 1e-5  # if training blows up, decrease this
 
 TRAIN:
-    train_years: [2018, 2019, 2021]
+    train_years: [2018]
     training_weights: [0.4, 0.3, 0.2, 0.1]  # frequency to sample from each bin
-    num_samples: 160_000  # total generator training samples, default 160,000
+    num_samples: 4_000  # total generator training samples, default 160,000
     steps_per_checkpoint: 32  # number of batches per checkpoint save
     batch_size: 2  # we could use 16 without CL, or 2 with CL #Makes gradient calculated by the GAN more accurate -- increasing it reduces variability at the end
     kl_weight: 1e-8  # used for VAEGAN

@@ -163,6 +163,7 @@ ensemble_members = fcst_params["OUTPUT"]["ensemble_members"]
 save_crps_only = fcst_params["OUTPUT"]["save_crps_only"]
 leadtime = fcst_params["MODEL"]["leadtime"]
 accumulation = fcst_params["MODEL"]["accumulation"]
+time = fcst_params["MODEL"].get("time", 0)
 start_date_in = fcst_params["OUTPUT"]["start_date"]
 end_date_in = fcst_params["OUTPUT"]["end_date"]
 all_fcst_fields = fcst_params["DATA"]["all_fcst_fields"]
@@ -174,6 +175,17 @@ assert local_fcst_norm is not None
 
 start_date = date(start_date_in[2], start_date_in[1], start_date_in[0])
 end_date = date(end_date_in[2], end_date_in[1], end_date_in[0])
+
+if np.isscalar(time):
+    time = [int(time)]
+else:
+    time = [int(x) for x in time]
+
+for hour in time:
+    if hour not in (0, 6, 12, 18):
+        raise ValueError(
+            f"Unsupported forecast initialisation hour: {hour}"
+        )
 
 # Open and parse GAN config file
 config_path = os.path.join(model_folder, "setup_params.yaml")
@@ -287,142 +299,145 @@ def iter_dates(start, end):
 #Iterate through all dates that we want to forecast/CRPS
 for d in iter_dates(start_date, end_date):
 
-    # Open input netCDF file to get the times
-    file_name = os.path.join(fcst_input_folder, str(d.year), "tp.nc")
-    with nc.Dataset(file_name, mode="r") as nc_in:
-        start_times = nc_in["time"][:]
-        valid_times = nc_in["fcst_valid_time"][:]
-        latitude = nc_in["latitude"][:]
-        longitude = nc_in["longitude"][:]
+    for hour in time:
 
-        #Decode actual forecast start dates
-        time_var = nc_in["time"]
-        times = nc.num2date(
-            time_var[:],
-            units=time_var.units,
-            calendar=getattr(time_var, "calendar", "standard")
-        )
+        # Open input netCDF file to get the times
+        file_name = os.path.join(fcst_input_folder, str(d.year), "tp.nc")
+        with nc.Dataset(file_name, mode="r") as nc_in:
+            start_times = nc_in["time"][:]
+            valid_times = nc_in["fcst_valid_time"][:]
+            latitude = nc_in["latitude"][:]
+            longitude = nc_in["longitude"][:]
 
-        matches = [
-            i for i, t in enumerate(times)
-            if (t.year, t.month, t.day) == (d.year, d.month, d.day)
-        ]
+            #Decode actual forecast start dates
+            time_var = nc_in["time"]
+            times = nc.num2date(
+                time_var[:],
+                units=time_var.units,
+                calendar=getattr(time_var, "calendar", "standard")
+            )
 
-        if not matches:
-            print(f"Skipping {d}: not present in tp.nc")
-            continue
+            matches = [
+                i for i, t in enumerate(times)
+                if (t.year, t.month, t.day, t.hour) == (d.year, d.month, d.day, hour)
+            ]
 
-        fcst_idx = matches[0]
+            if not matches:
+                print(f"Skipping {d} {hour:02d}Z: not present in tp.nc")
+                continue
 
-        if crop_to_bounds:
-            lat_min, lon_min, lat_max, lon_max = bounds
+            fcst_idx = matches[0]
 
-            # Boolean masks work whether coordinates are ascending or descending
-            lat_mask = (latitude >= lat_min) & (latitude <= lat_max)
-            lon_mask = (longitude >= lon_min) & (longitude <= lon_max)
+            if crop_to_bounds:
+                lat_min, lon_min, lat_max, lon_max = bounds
 
-            if not lat_mask.any():
-                raise ValueError(
-                    f"No latitude values found within bounds {lat_min} to {lat_max}."
-                )
+                # Boolean masks work whether coordinates are ascending or descending
+                lat_mask = (latitude >= lat_min) & (latitude <= lat_max)
+                lon_mask = (longitude >= lon_min) & (longitude <= lon_max)
 
-            if not lon_mask.any():
-                raise ValueError(
-                    f"No longitude values found within bounds {lon_min} to {lon_max}."
-                )
+                if not lat_mask.any():
+                    raise ValueError(
+                        f"No latitude values found within bounds {lat_min} to {lat_max}."
+                    )
 
-            latitude = latitude[lat_mask]
-            longitude = longitude[lon_mask]
+                if not lon_mask.any():
+                    raise ValueError(
+                        f"No longitude values found within bounds {lon_min} to {lon_max}."
+                    )
 
-    # Create output netCDF file
-    pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
-    if not save_crps_only:
-        nc_out_path = os.path.join(output_folder, f"GAN_fcst_crps_{d.year}{d.month:02d}{d.day:02d}_00Z.nc")
-    elif save_crps_only:
-        nc_out_path = os.path.join(output_folder, f"GAN_crps_{d.year}{d.month:02d}{d.day:02d}_00Z.nc")
-    netcdf_dict = create_output_file(nc_out_path)
+                latitude = latitude[lat_mask]
+                longitude = longitude[lon_mask]
 
-    netcdf_dict["time_data"][0] = start_times[fcst_idx]
+        # Create output netCDF file
+        pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
+        if not save_crps_only:
+            nc_out_path = os.path.join(output_folder, f"GAN_fcst_crps_{d.year}{d.month:02d}{d.day:02d}_{hour:02d}Z.nc")
+        elif save_crps_only:
+            nc_out_path = os.path.join(output_folder, f"GAN_crps_{d.year}{d.month:02d}{d.day:02d}_{hour:02d}Z.nc")
+        netcdf_dict = create_output_file(nc_out_path)
 
-    valid_time_idx = ([int(leadtime/HOURS)],) #for 1x24h forecast with lead time LEADTIME
-    valid_times_forecast = valid_times[fcst_idx, valid_time_idx]
-    print(np.shape(valid_times_forecast))
-    netcdf_dict["valid_time_data"][0,:] = valid_times_forecast
+        netcdf_dict["time_data"][0] = start_times[fcst_idx]
 
-    # For each valid time
-    for valid_time_num in range(len(valid_times_forecast)):
-        
-        # the contents of the next loop are v. similar to load_fcst from data.py,
-        # but not quite the same, since that has different assumptions on how the
-        # forecast data is stored.  TODO: unify the data normalisation between these?
-        field_arrays = []
-        try:
+        valid_time_idx = ([int(leadtime/HOURS)],) #for 1x24h forecast with lead time LEADTIME
+        valid_times_forecast = valid_times[fcst_idx, valid_time_idx]
+        print(np.shape(valid_times_forecast))
+        netcdf_dict["valid_time_data"][0,:] = valid_times_forecast
+
+        # For each valid time
+        for valid_time_num in range(len(valid_times_forecast)):
+            
+            # the contents of the next loop are v. similar to load_fcst from data.py,
+            # but not quite the same, since that has different assumptions on how the
+            # forecast data is stored.  TODO: unify the data normalisation between these?
             field_arrays = []
+            try:
+                field_arrays = []
 
-            for field in all_fcst_fields:
-                data = load_fcst(
-                    field,
-                    d.strftime('%Y%m%d'),
-                    leadtime=leadtime,
-                    accumulation=accumulation,
-                    log_precip=log_precip,
-                    norm=True,
-                    fcst_path=fcst_input_folder,
-                    fcst_norm_dict=local_fcst_norm
-                )
-                field_arrays.append(data)
+                for field in all_fcst_fields:
+                    data = load_fcst(
+                        field,
+                        d.strftime('%Y%m%d'),
+                        hour=hour,
+                        leadtime=leadtime,
+                        accumulation=accumulation,
+                        log_precip=log_precip,
+                        norm=True,
+                        fcst_path=fcst_input_folder,
+                        fcst_norm_dict=local_fcst_norm
+                    )
+                    field_arrays.append(data)
 
-        except FileNotFoundError as e:
-            print(f"Skipping {d}: {e}")
+            except FileNotFoundError as e:
+                print(f"Skipping {d} {hour:02d}Z: {e}")
+                netcdf_dict["rootgrp"].close()
+
+                if os.path.exists(nc_out_path):
+                    os.remove(nc_out_path)
+
+                continue
+            
+            network_fcst_input = np.concatenate(field_arrays, axis=-1)  # lat x lon x 2*len(all_fcst_fields)
+            network_fcst_input = np.expand_dims(network_fcst_input, axis=0)  # 1 x lat x lon x 2*len(...)
+            
+            noise_shape = network_fcst_input.shape[1:-1] + (noise_channels,)
+            noise_gen = NoiseGenerator(noise_shape, batch_size=1)
+            z = noise_gen()
+            # print("noise:", z.min(), z.max(), z.mean())
+            progbar = Progbar(ensemble_members)
+
+            ens_cgan_preds = []
+            for ii in range(ensemble_members):
+                gan_inputs = [network_fcst_input, network_const_input, noise_gen()]
+                gan_prediction = gen.predict(gan_inputs, verbose=False)  # 1 x lat x lon x 1
+                pred = denormalise(gan_prediction[0, :, :, 0])
+                if not save_crps_only:
+                    netcdf_dict["precipitation"][0, ii, valid_time_num, :, :] = pred
+                
+                ens_cgan_preds.append(pred)
+                progbar.add(1)
+                
+
+            ens_cgan_preds_stacked = np.stack(ens_cgan_preds, axis=0)
+
+            #load relevant truth data
+            truth_data, _ = load_truth_and_mask(d.strftime('%Y%m%d'), hour=hour, leadtime=leadtime, log_precip=log_precip, truth_path=truth_input_folder)
+            if truth_data.ndim == 3 and truth_data.shape[0] == 1:
+                truth_data = truth_data[0]
+            print(f"shape truth = {np.shape(truth_data)}")
+            print(f"shape ens_cgan_preds_stacked = {np.shape(ens_cgan_preds_stacked)}")
+            crps = ps.crps_ensemble(
+                truth_data,
+                ens_cgan_preds_stacked,
+                axis=0
+            )
+
+            netcdf_dict["crps"][0, valid_time_num, :, :] = crps
+
+            print("network_fcst_input finite:", np.isfinite(network_fcst_input).all())
+            print("gan_prediction finite:", np.isfinite(gan_prediction).all())
+            print("pred finite:", np.isfinite(pred).all())
+            print("pred min/max:", np.nanmin(pred), np.nanmax(pred))
             netcdf_dict["rootgrp"].close()
-
-            if os.path.exists(nc_out_path):
-                os.remove(nc_out_path)
-
-            continue
-        
-        network_fcst_input = np.concatenate(field_arrays, axis=-1)  # lat x lon x 2*len(all_fcst_fields)
-        network_fcst_input = np.expand_dims(network_fcst_input, axis=0)  # 1 x lat x lon x 2*len(...)
-        
-        noise_shape = network_fcst_input.shape[1:-1] + (noise_channels,)
-        noise_gen = NoiseGenerator(noise_shape, batch_size=1)
-        z = noise_gen()
-        # print("noise:", z.min(), z.max(), z.mean())
-        progbar = Progbar(ensemble_members)
-
-        ens_cgan_preds = []
-        for ii in range(ensemble_members):
-            gan_inputs = [network_fcst_input, network_const_input, noise_gen()]
-            gan_prediction = gen.predict(gan_inputs, verbose=False)  # 1 x lat x lon x 1
-            pred = denormalise(gan_prediction[0, :, :, 0])
-            if not save_crps_only:
-                netcdf_dict["precipitation"][0, ii, valid_time_num, :, :] = pred
-            
-            ens_cgan_preds.append(pred)
-            progbar.add(1)
-            
-
-        ens_cgan_preds_stacked = np.stack(ens_cgan_preds, axis=0)
-
-        #load relevant truth data
-        truth_data, _ = load_truth_and_mask(d.strftime('%Y%m%d'), leadtime=leadtime, log_precip=log_precip, truth_path=truth_input_folder)
-        if truth_data.ndim == 3 and truth_data.shape[0] == 1:
-            truth_data = truth_data[0]
-        print(f"shape truth = {np.shape(truth_data)}")
-        print(f"shape ens_cgan_preds_stacked = {np.shape(ens_cgan_preds_stacked)}")
-        crps = ps.crps_ensemble(
-            truth_data,
-            ens_cgan_preds_stacked,
-            axis=0
-        )
-
-        netcdf_dict["crps"][0, valid_time_num, :, :] = crps
-
-        print("network_fcst_input finite:", np.isfinite(network_fcst_input).all())
-        print("gan_prediction finite:", np.isfinite(gan_prediction).all())
-        print("pred finite:", np.isfinite(pred).all())
-        print("pred min/max:", np.nanmin(pred), np.nanmax(pred))
-        netcdf_dict["rootgrp"].close()
 
     # Close the ECMWF forecasts NetCDF file
     # nc_in.close()

@@ -573,7 +573,8 @@ for d in iter_dates(start_date, end_date):
                 accumulation=accumulation,
                 log_precip=log_precip,
                 truth_path=truth_input_folder,
-                mask_path=mask_input_folder
+                mask_path=mask_input_folder,
+                hour=hour
             )
 
             truth_data = np.squeeze(

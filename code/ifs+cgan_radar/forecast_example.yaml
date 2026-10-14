@@ -1,0 +1,64 @@
+# =============================================================================
+#
+# Defines the default model, predictor fields, data paths, and output location
+# used to generate cGAN forecasts for 6-hour precipitation accumulations.
+#
+# MODEL  - trained model location, checkpoint, and accumulation period
+# DATA   - spatial domain and IFS forecast predictor fields
+# INPUT  - input forecast, truth, constants, and normalisation data paths
+# OUTPUT - location for generated cGAN forecasts
+#
+# =============================================================================
+
+MODEL:
+    folder: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/cgan_training/logs"
+    checkpoint: 256
+    accumulation: 6
+    leadtime: 30
+    hour: 0
+
+DATA:
+    crop_to_bounds: False
+    bounds: [-35.06, 15.94, 3.26, 51.06] #bounds: [lat_min, lon_min, lat_max, lon_max]
+    all_fcst_fields:
+        - mcc
+        - sp
+        - tcwv
+        - tp
+
+    accumulated_fields:
+        - cp
+        - ssr
+        - tp
+
+    nonnegative_fields:
+        - cp
+        - tcc
+        - sp
+        - ssr
+        - t2m
+        - tciw
+        - tclw
+        - tcw
+        - tcwv
+        - tp
+
+CONSTANTS:
+    #List of constants to use in the model; can be empty if you don't want to use any constants
+    #Each item should correspond to a file in the constants folder, e.g. "elev" corresponds to "elev.nc"
+    #Should already be normalised to be betweeen -1 and 1, and have the same shape as the input truth data
+    constants_list: ["elev", "lsm", "distance_from_radar_instrument", "azimuthal_sin", "azimuthal_cos"]
+
+INPUT: #Default to None if not using
+    truth_folder: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/processed/6h'
+    mask_folder: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/processed/6h/mask'
+    fcst_folder: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+    constants_folder: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+    normalisation_folder: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/IFS/norm'
+
+OUTPUT:
+    save_crps_only: False
+    ensemble_members: 50
+    start_date: [1, 6, 2026]
+    end_date: [29, 9, 2026]
+    folder: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/cgan_training/test_forecasts_6h"

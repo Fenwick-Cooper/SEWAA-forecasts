@@ -1,0 +1,8 @@
+MODEL:
+    folder: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cgan_training/uk_chenies/logs_run8_5constants_batch2_cl1000"
+    checkpoint: 9472
+
+OUTPUT:
+    folder: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/forecasts/best_model"
+    ensemble_members: 1000
+    save_crps_only: False

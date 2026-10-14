@@ -1,10 +1,6 @@
-// Models were: "IFS+cGAN IMERG 6h", "IFS+cGAN IMERG 24h"
-// Models: "IFS+cGAN IMERG 6h", "IFS+cGAN IMERG 24h"
-let modelName = "IFS+cGAN IMERG 24h"
-// Regions: Burundi, Djibouti, Eritrea, Ethiopia, Kenya, Rwanda, Somalia, South Sudan,
-//          Sudan, Tanzania, Uganda, ICPAC, East Africa, All.
-// There is ony one region for the Madagascar north and South East Africa models.
-let regionName = "South East Africa";
+let modelName = "IFS+cGAN radar 24h"
+// There is ony one region for the Rwanda radar model
+let regionName = "Rwanda";
 let units = "mm/6h";			// Can be mm/h, mm/6h, mm/day, mm/week
 let style = "Default";			// Can be "Default", "ICPAC", "KMD", "EMI", "ECMWF".
 let plotType="Probability";		// Can be "Probability", "Values", "Mean" or "Std".
@@ -42,8 +38,7 @@ async function modelSelect() {
 			<a href=\"https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS\" target=\"_blank\">IFS</a>
 			output is post-processed using
 			<a href=\"https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120\" target=\"_blank\">cGAN</a>
-			trained on <a href=\"https://gpm.nasa.gov/data/imerg\" target=\"_blank\"> IMERG</a>
-			v7 and IFS hindcasts from 2014-2019 October to March inclusive to produce forecasts of 6h rainfall intervals.
+			trained on radar data and IFS forecasts/hindcasts from 2016-2024 to produce forecasts of 6h rainfall intervals.
 			Model version 1.`;
 	
 	} else if (modelName == "24h accumulation") {
@@ -52,8 +47,7 @@ async function modelSelect() {
 			<a href=\"https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS\" target=\"_blank\">IFS</a>
 			output is post-processed using
 			<a href=\"https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120\" target=\"_blank\">cGAN</a>
-			trained on <a href=\"https://gpm.nasa.gov/data/imerg\" target=\"_blank\"> IMERG</a>
-			v7 and IFS hindcasts from 2014-2019 October to March inclusive to produce forecasts of 24h rainfall intervals.
+			trained on radar data and IFS forecasts/hindcasts from 2016-2024 to produce forecasts of 24h rainfall intervals.
 			Model version 1.`;
 
 	}
@@ -374,11 +368,11 @@ async function loadForecast() {
 	// The directory name depends upon which model we are looking at
 	let countsDir;
 	let accumulationHours;
-	if (modelName == "IFS+cGAN IMERG 6h") {
-		countsDir = "ifs+cgan_imerg_6h/histograms";
+	if (modelName == "IFS+cGAN radar 6h") {
+		countsDir = "ifs+cgan_radar_6h/histograms";
 		accumulationHours = 6;
-	} else if (modelName == "IFS+cGAN IMERG 24h") {
-		countsDir = "ifs+cgan_imerg_24h/histograms";
+	} else if (modelName == "IFS+cGAN radar 24h") {
+		countsDir = "ifs+cgan_radar_24h/histograms";
 		accumulationHours = 24;
 	}
 	
@@ -522,10 +516,10 @@ function updateDateMenus() {
 async function loadDates() {
 	// Fetch a remote file
 	let fileName;
-	if (modelName == "IFS+cGAN IMERG 6h") {
-		fileName = "../../../data/ifs+cgan_imerg_6h/histograms/available_dates.json?"+dateLoadNumber;
-	} else if (modelName == "IFS+cGAN IMERG 24h") {
-		fileName = "../../../data/ifs+cgan_imerg_24h/histograms/available_dates.json?"+dateLoadNumber;
+	if (modelName == "IFS+cGAN radar 6h") {
+		fileName = "../../../data/ifs+cgan_radar_6h/histograms/available_dates.json?"+dateLoadNumber;
+	} else if (modelName == "IFS+cGAN radar 24h") {
+		fileName = "../../../data/ifs+cgan_radar_24h/histograms/available_dates.json?"+dateLoadNumber;
 	}
 	// dateLoadNumber ensures that the available_dates.json file is not cached
 	dateLoadNumber += 1;

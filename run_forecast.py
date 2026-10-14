@@ -302,32 +302,32 @@ if __name__=='__main__':
         IFS_data_path = f"{root_dir}/data/IFS_forecast_data/{year}"
             
         # Where cGAN 6h forecasts will be stored
-        cGAN_forecast_path_6h = f"{root_dir}/data/ifs+cgan_imerg_6h/cGAN_forecasts"
+        cGAN_forecast_path_6h = f"{root_dir}/data/ifs+cgan_radar_6h/cGAN_forecasts"
         
         # Where cGAN 24h forecasts will be stored
-        cGAN_forecast_path_24h = f"{root_dir}/data/ifs+cgan_imerg_24h/cGAN_forecasts"
+        cGAN_forecast_path_24h = f"{root_dir}/data/ifs+cgan_radar_24h/cGAN_forecasts"
         
         # Where the cGAN model forecast script is located
-        cGAN_forecast_script_path = f"{root_dir}/code/ifs+cgan_imerg"
+        cGAN_forecast_script_path = f"{root_dir}/code/ifs+cgan_radar"
 
         # Where the ELR model script is located
         ELR_script_path = f"{root_dir}/code/ELR"
 
         # Where the ELR models are located
-        ELR_model_path = f"{root_dir}/models/ifs+cgan_imerg_24h/ELR"
+        ELR_model_path = f"{root_dir}/models/ifs+cgan_radar_24h/ELR"
 
         # Where the ELR predictions are saved
-        ELR_predictions_path = f"{root_dir}/data/ifs+cgan_imerg_24h/ELR_predictions"
+        ELR_predictions_path = f"{root_dir}/data/ifs+cgan_radar_24h/ELR_predictions"
 
         # Countries for ELR
         ELR_countries = ["Rwanda","Kenya","Ethiopia"]
         ELR_country_admin_regions = {"Rwanda":"county","Kenya":"subcounty","Ethiopia":"subcounty"}
         
         # Where the cGAN 6h histogram counts will be stored
-        cGAN_counts_path_6h = f"{root_dir}/data/ifs+cgan_imerg_6h/histograms"
+        cGAN_counts_path_6h = f"{root_dir}/data/ifs+cgan_radar_6h/histograms"
         
         # Where the cGAN 24h histogram counts will be stored
-        cGAN_counts_path_24h = f"{root_dir}/data/ifs+cgan_imerg_24h/histograms"
+        cGAN_counts_path_24h = f"{root_dir}/data/ifs+cgan_radar_24h/histograms"
         
         
         # Download the IFS data
@@ -345,15 +345,13 @@ if __name__=='__main__':
             (
                 "University of Oxford",
                 (
-                    f"https://rain.physics.ox.ac.uk/South_East_Africa/"
-                    f"IFS_forecast_data/{year}/{file_name}"
+                    f"https://rain.physics.ox.ac.uk/ICPAC/operational/24h_accumulations/IFS_forecast_data/{year}/{file_name}"
                 ),
             ),
             (
                 "Fenwick's home",
                 (
-                    f"http://megacorr.dynu.net/South_East_Africa/"
-                    f"IFS_forecast_data/IFS_forecast_data/{year}/{file_name}"
+                    f"http://megacorr.dynu.net/ICPAC/operational/24h_accumulations/IFS_forecast_data/{year}/{file_name}"
                 ),
             ),
         ]

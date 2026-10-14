@@ -14,38 +14,23 @@ South East Africa rainfall forecasts.
 <p>
 Model:
 <select id="modelSelect" onchange="modelSelect()">
-	<option value="IFS+cGAN IMERG 6h">IFS+cGAN IMERG 6h</option>
-    <option value="IFS+cGAN IMERG 24h">IFS+cGAN IMERG 24h</option>
+	<option value="IFS+cGAN radar 6h">IFS+cGAN radar 6h</option>
+    <option value="IFS+cGAN radar 24h">IFS+cGAN radar 24h</option>
 </select>
 <span id="modelInfo">
 : The <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a>
 <a href="https://confluence.ecmwf.int/display/FUG/Section+2+The+ECMWF+Integrated+Forecasting+System+-+IFS" target="_blank">IFS</a>
 output is post-processed using
 <a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003120" target="_blank">cGAN</a>
-trained on <a href="https://gpm.nasa.gov/data/imerg" target="_blank"> IMERG</a>
-v7 and IFS hindcasts from 2014-2019 October to March inclusive to produce forecasts of 6h rainfall intervals.
+trained on radar data and IFS forecasts/hindcasts to produce forecasts of 6h rainfall intervals.
 Model version 1.
 </span>
 </p>
 
 <p>
-<!--
-Region:
-<select id="regionSelect" onchange="regionSelect()">
-	<option value="East Africa">East Africa</option>
-    <option value="Burundi">Burundi</option>
-    <option value="Djibouti">Djibouti</option>
-    <option value="Eritrea">Eritrea</option>
-    <option value="Ethiopia">Ethiopia</option>
-    <option value="Kenya">Kenya</option>
-    <option value="Rwanda">Rwanda</option>
-    <option value="Somalia">Somalia</option>
-    <option value="South Sudan">South Sudan</option>
-    <option value="Sudan">Sudan</option>
-    <option value="Tanzania">Tanzania</option>
-    <option value="Uganda">Uganda</option>
-</select>
--->
+Region: Rwanda
+
+&nbsp;&nbsp;
 
 Initialisation:
 <select id="initYearSelect" onchange="initTimeSelect()" title="Forecast initialisation year"></select>

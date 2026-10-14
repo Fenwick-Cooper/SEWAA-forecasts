@@ -6,10 +6,12 @@
 # Jupyter Notebook
 .ipynb_checkpoints
 
+#ignore forecast data
 data/**
-!data/IFS_forecast_data/
+#but sync constants, country boundaries, example_grids
 !data/constants/
+!data/constants/*
 !data/country_boundaries/
-!data/country_boundaries/*
-
-TODO.txt
+!data/country_boundaries/**
+!data/example_grids/
+!data/example_grids/**

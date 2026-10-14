@@ -1,0 +1,58 @@
+AOPP_MW_2CONSTANTS:
+    GENERAL:
+        TRUTH_PATH: '/network/scratch/matthewwright/chenies_cropped_daily'
+        MASK_PATH: '/network/scratch/matthewwright/chenies_cropped_daily/mask' #Use None if no mask
+        FORECAST_PATH: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/ifs/chenies_radar_grid"
+        CONSTANTS_PATH: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/nimrod_data/chenies/1km/constants"
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords'
+        
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords'
+
+AOPP_MW_3CONSTANTS:
+    GENERAL:
+        TRUTH_PATH: '/network/scratch/matthewwright/chenies_cropped_daily'
+        MASK_PATH: '/network/scratch/matthewwright/chenies_cropped_daily/mask' #Use None if no mask
+        FORECAST_PATH: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/ifs/chenies_radar_grid"
+        CONSTANTS_PATH: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/nimrod_data/chenies/1km/constants"
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords_3con'
+        
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords_3con'
+
+
+AOPP_MW_5CONSTANTS:
+    GENERAL:
+        TRUTH_PATH: '/network/scratch/matthewwright/chenies_cropped_daily'
+        MASK_PATH: '/network/scratch/matthewwright/chenies_cropped_daily/mask' #Use None if no mask
+        FORECAST_PATH: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/ifs/chenies_radar_grid"
+        CONSTANTS_PATH: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/nimrod_data/chenies/1km/constants"
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords_5con'
+        
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords_5con'
+
+AOPP_MW_5CONSTANTS_MULTILEAD:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/chenies_cropped_daily'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/chenies_cropped_daily/mask' #Use None if no mask
+        FORECAST_PATH: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/ifs/chenies_radar_grid"
+        CONSTANTS_PATH: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/nimrod_data/chenies/1km/constants"
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords_5con_multilead'
+        
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords_5con_multilead'
+
+AOPP_MW_RWANDA:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/processed/6h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/processed/6h/mask'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/IFS/norm'
+
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/cgan_training/tfrecords'
+
+DEFAULT_LOCAL:
+    

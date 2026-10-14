@@ -345,13 +345,13 @@ if __name__=='__main__':
             (
                 "University of Oxford",
                 (
-                    f"https://rain.physics.ox.ac.uk/ICPAC/operational/24h_accumulations/IFS_forecast_data/{year}/{file_name}"
+                    f"https://rain.physics.ox.ac.uk/ICPAC/operational/{accum_time_local}h_accumulations/IFS_forecast_data/{year}/{file_name}"
                 ),
             ),
             (
                 "Fenwick's home",
                 (
-                    f"http://megacorr.dynu.net/ICPAC/operational/24h_accumulations/IFS_forecast_data/{year}/{file_name}"
+                    f"http://megacorr.dynu.net/ICPAC/operational/{accum_time_local}h_accumulations/IFS_forecast_data/{year}/{file_name}"
                 ),
             ),
         ]

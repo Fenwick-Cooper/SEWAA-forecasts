@@ -114,8 +114,15 @@ for valid_time_num in range(len(valid_time)):
         f"{hour:02d}_{valid_hour}h.nc"
     )
 
+    temp_file_name = file_name + ".temp"
+
+    # Remove an incomplete histogram from a previous failed run.
+    if os.path.exists(temp_file_name):
+        print(f"Removing incomplete histogram {temp_file_name}")
+        os.remove(temp_file_name)
+
     # Create a new NetCDF file
-    rootgrp = nc.Dataset(file_name, "w", format="NETCDF4")
+    rootgrp = nc.Dataset(temp_file_name, "w", format="NETCDF4")
 
     # Describe where this data comes from
     rootgrp.description = "cGAN forecast histogram counts"
@@ -196,4 +203,9 @@ for valid_time_num in range(len(valid_time)):
 
     # Close the netCDF file
     rootgrp.close()
+    # Only expose the final filename after this histogram
+    # has been written successfully.
+    os.replace(temp_file_name, file_name)
+
+    print(f"Successfully completed histogram {file_name}")
     

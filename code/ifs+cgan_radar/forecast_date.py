@@ -84,8 +84,6 @@ import numpy as np
 from tensorflow.keras.utils import Progbar
 
 #Imports
-from data import HOURS, denormalise, load_hires_constants, load_truth_and_mask, load_fcst_norm, logprec
-import read_config
 from noise import NoiseGenerator
 from setupmodel import setup_model
 
@@ -167,10 +165,6 @@ with open(args.fcst_yaml_file, "r") as f:
         print(exc)
         raise
 
-# Setup
-read_config.set_gpu_mode()  # set up whether to use GPU, and mem alloc mode
-downscaling_steps = read_config.read_downscaling_factor()["steps"]
-
 model_folder = fcst_params["MODEL"]["folder"]
 checkpoint = fcst_params["MODEL"]["checkpoint"]
 
@@ -190,10 +184,6 @@ output_folder = fcst_params["OUTPUT"]["folder"]
 if truth_input_folder == '/to/edit/if/you/want/to/calculate/crps' and save_crps:
     raise ValueError("If you want to calculate and save the CRPS, you need to download and specify the location of truth data. Remove --save_crps flag to run forecasts without calculating CRPS.")
 
-
-local_fcst_norm = load_fcst_norm(year=2018, normalisation_path=normalisation_folder)
-assert local_fcst_norm is not None
-
 # Open and parse GAN config file
 config_path = os.path.join(model_folder, "setup_params.yaml")
 with open(config_path, "r") as f:
@@ -210,6 +200,19 @@ noise_channels = setup_params["GENERATOR"]["noise_channels"]
 latent_variables = setup_params["GENERATOR"]["latent_variables"]
 filters_disc = setup_params["DISCRIMINATOR"]["filters_disc"]
 constants_list = setup_params["CONSTANTS"]["constants_list"]
+local_config_path = setup_params["GENERAL"]["local_config_path"]
+
+os.environ["CGAN_LOCAL_CONFIG"] = local_config_path
+
+# Setup and imports that depend on local_config_path
+from data import HOURS, denormalise, load_hires_constants, load_truth_and_mask, load_fcst_norm, logprec
+import read_config
+
+local_fcst_norm = load_fcst_norm(year=2018, normalisation_path=normalisation_folder)
+assert local_fcst_norm is not None
+
+read_config.set_gpu_mode()  # set up whether to use GPU, and mem alloc mode
+downscaling_steps = read_config.read_downscaling_factor()["steps"]
 
 assert mode == "GAN", "standalone forecast script only for GAN, not VAE-GAN or deterministic model"
 
@@ -327,8 +330,19 @@ with xr.open_dataset(EXAMPLE_GRID_FILE) as radar_grid:
 
 # Create output netCDF file
 pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
-nc_out_path = os.path.join(output_folder, f"GAN_{d.year}{d.month:02d}{d.day:02d}_{hour:02d}Z.nc")
-netcdf_dict = create_output_file(nc_out_path)
+nc_out_path = os.path.join(
+    output_folder,
+    f"GAN_{d.year}{d.month:02d}{d.day:02d}_{hour:02d}Z.nc"
+)
+
+temp_nc_out_path = nc_out_path + ".temp"
+
+# Remove any incomplete file left by a previous failed run.
+if os.path.exists(temp_nc_out_path):
+    print(f"Removing incomplete forecast {temp_nc_out_path}")
+    os.remove(temp_nc_out_path)
+
+netcdf_dict = create_output_file(temp_nc_out_path)
 
 netcdf_dict["time_data"][0] = start_times[0]
 
@@ -535,8 +549,14 @@ for valid_time_num, current_leadtime in enumerate(leadtime):
 
         netcdf_dict["crps"][0, valid_time_num, :, :] = crps
 
-#Close file after all leadtimes are done
+# Close file after all lead times are done.
 netcdf_dict["rootgrp"].close()
+
+# Only expose the final filename once the complete forecast
+# has been produced successfully.
+os.replace(temp_nc_out_path, nc_out_path)
+
+print(f"Successfully completed forecast {nc_out_path}")
 
 
 

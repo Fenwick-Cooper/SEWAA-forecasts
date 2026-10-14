@@ -172,7 +172,8 @@ def load_truth_and_mask(date,
                         accumulation=ACCUMULATION,
                         log_precip=False,
                         truth_path=None,
-                        mask_path=None):
+                        mask_path=None,
+                        hour=0):
     '''
     Returns a single (truth, mask) item of data.
     Parameters:
@@ -193,7 +194,7 @@ def load_truth_and_mask(date,
     
     # convert date and time_idx to get the correct truth file
     fcst_date = datetime.datetime.strptime(date, "%Y%m%d")
-    valid_dt = fcst_date + datetime.timedelta(hours=leadtime)
+    valid_dt = fcst_date + datetime.timedelta(hours=hour) + datetime.timedelta(hours=leadtime)
     year = str(valid_dt.year)
     if accumulation == 24:
         fname = f"{valid_dt.strftime('%Y%m%d')}_06"

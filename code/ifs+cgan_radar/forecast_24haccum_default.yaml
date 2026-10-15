@@ -44,7 +44,7 @@ DATA:
 
 INPUT:
     truth_folder: '/to/edit/if/you/want/to/calculate/crps'
-    fcst_folder: '../../data/IFS_forecast_data'
+    fcst_folder: '../../data/IFS_forecast_data/24h'
     constants_folder: '../../data/constants'
     normalisation_folder: '../../models/ifs+cgan_radar_24h'
 

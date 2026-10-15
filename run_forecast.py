@@ -299,7 +299,7 @@ if __name__=='__main__':
         root_dir = "."
         
         # Where IFS data for 6 hour accumulations will be stored
-        IFS_data_path = f"{root_dir}/data/IFS_forecast_data/{year}"
+        IFS_data_path = f"{root_dir}/data/IFS_forecast_data/{accum_time_local}h/{year}"
             
         # Where cGAN 6h forecasts will be stored
         cGAN_forecast_path_6h = f"{root_dir}/data/ifs+cgan_radar_6h/cGAN_forecasts"

@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def crps_ensemble(observation, forecasts):
     """
     This function is currently unused, but is equivalent to properscoring's crps_ensemble.

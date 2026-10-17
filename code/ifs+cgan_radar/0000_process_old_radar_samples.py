@@ -1,5 +1,24 @@
+#Required conda environment (Mac/Linux):
+# conda create -n radar_processing -c conda-forge \
+#     python=3.11 \
+#     numpy \
+#     pandas \
+#     xarray \
+#     dask \
+#     netcdf4 \
+#     h5netcdf \
+#     scipy \
+#     arm_pyart \
+#     xesmf \
+#     esmpy \
+#     matplotlib \
+#     bottleneck \
+#     cftime \
+#     -y
+
 from pathlib import Path
 import re
+import traceback
 
 import numpy as np
 import pandas as pd
@@ -10,7 +29,6 @@ import pyart
 from netCDF4 import num2date
 from pyart.core.transforms import cartesian_to_geographic
 
-# NEW: parallel processing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # ------------------------------------------------------------------
@@ -18,30 +36,35 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # ------------------------------------------------------------------
 
 base_dir = Path(
-    "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/"
-    "rwanda_radar_data/single_precip_sample/raw"
+    "/Volumes/Rain/LiCie/projDir/data/mdv/precip/single"
 )
+
+# None = process all available days
+# Set of dates = process only specified days
+# RETRY_DAYS = None
+RETRY_DAYS = {
+    "20190206",
+    "20190227",
+    "20190408",
+    "20190410",
+}
 
 date_re = re.compile(r"^\d{8}$")
 file_re = re.compile(r"^\d{6}\.mdv$")
 
 # Separate folders for the 6-hour and 24-hour products.
 OUT_FOLDER_6H = Path(
-    "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/"
-    "rwanda_radar_data/single_precip_sample/processed/6h"
+    "/Volumes/Rain/processed_rwandan_radar/6h"
 )
 
 OUT_FOLDER_24H = Path(
-    "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/"
-    "rwanda_radar_data/single_precip_sample/processed/24h"
+    "/Volumes/Rain/processed_rwandan_radar/24h"
 )
 
 regrid = True
 
 EXAMPLE_GRID_PATH = Path(
-    "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/"
-    "rwanda_radar_data/example_grids/"
-    "2026_radar_sample_grid_cropped_to_old_extent.nc"
+    "../../data/example_grids/eg_radar_grid.nc"
 )
 
 regridding_method = "conservative"
@@ -52,7 +75,7 @@ var_out = "rainfall_rate"
 # Number of daily directories to process simultaneously.
 N_WORKERS = 4
 
-OVERWRITE = True
+OVERWRITE = False
 
 # ------------------------------------------------------------
 # Completeness requirements
@@ -73,6 +96,10 @@ MIN_TIMESTEPS_6H = int(
         EXPECTED_TIMESTEPS_6H
         * MIN_COMPLETENESS
     )
+)
+
+MIN_TIMESTEPS_24H = int(
+    np.ceil(EXPECTED_TIMESTEPS_24H * MIN_COMPLETENESS)
 )
 
 # ------------------------------------------------------------------
@@ -306,10 +333,8 @@ def process_day(day_dir):
 
     time_counts = (
         xr.DataArray(
-            np.ones(day_ds.sizes["time"]),
-            coords={
-                "time": day_ds.time,
-            },
+            np.ones(day_ds.sizes["time"], dtype=np.int32),
+            coords={"time": day_ds.time},
             dims="time",
         )
         .resample(
@@ -317,6 +342,7 @@ def process_day(day_dir):
             label="left",
         )
         .sum()
+        .fillna(0)
     )
 
     # --------------------------------------------------------------
@@ -419,10 +445,11 @@ def process_day(day_dir):
 
         timestamp = pd.Timestamp(t)
 
-        n_times = int(
-            time_counts
-            .sel(time=[t])
-            .item()
+        count_value = time_counts.sel(time=t).item()
+
+        n_times = (
+            0 if pd.isna(count_value)
+            else int(count_value)
         )
 
         # ----------------------------------------------------------
@@ -539,14 +566,34 @@ if __name__ == "__main__":
     # Find daily directories
     # --------------------------------------------------------------
 
-    day_dirs = sorted(
-        day_dir
-        for day_dir in base_dir.iterdir()
-        if (
-            day_dir.is_dir()
-            and date_re.match(day_dir.name)
+    if RETRY_DAYS is not None:
+
+        day_dirs = sorted(
+            day_dir
+            for day_dir in base_dir.iterdir()
+            if (
+                day_dir.is_dir()
+                and day_dir.name in RETRY_DAYS
+            )
         )
+
+    else:
+
+        day_dirs = sorted(
+            day_dir
+            for day_dir in base_dir.iterdir()
+            if (
+                day_dir.is_dir()
+                and date_re.match(day_dir.name)
+            )
+        )
+
+    print(
+        f"Found {len(day_dirs)} daily directories"
     )
+
+    if RETRY_DAYS is not None:
+        print(f"Retrying days: {sorted(RETRY_DAYS)}")
 
     print(
         f"Found {len(day_dirs)} daily directories"
@@ -593,8 +640,25 @@ if __name__ == "__main__":
 
                 print(
                     f"FAILED {day_dir}: "
-                    f"{type(e).__name__}: "
-                    f"{e}"
+                    f"{type(e).__name__}: {e}"
+                )
+
+                print(
+                    "".join(
+                        traceback.format_exception(
+                            type(e),
+                            e,
+                            e.__traceback__,
+                        )
+                    )
+                )
+
+                failed_days.append(
+                    (
+                        day_dir,
+                        type(e).__name__,
+                        str(e),
+                    )
                 )
 
                 failed_days.append(
@@ -641,7 +705,15 @@ if __name__ == "__main__":
     # --------------------------------------------------------------
 
     files = sorted(
-        OUT_FOLDER_6H.glob("*/*.nc")
+        f
+        for f in OUT_FOLDER_6H.glob("*/*.nc")
+        if (
+            f.is_file()
+            and re.fullmatch(
+                r"\d{8}_(00|06|12|18)\.nc",
+                f.name,
+            )
+        )
     )
 
     if not files:
@@ -659,9 +731,68 @@ if __name__ == "__main__":
     # Open all 6-hour files
     # --------------------------------------------------------------
 
+    print("\nChecking 6-hour NetCDF files...")
+
+    good_files = []
+    bad_files = []
+
+    for f in files:
+
+        try:
+
+            with xr.open_dataset(
+                f,
+                engine="netcdf4",
+            ) as ds:
+
+                if var_out not in ds:
+                    raise ValueError(
+                        f"Missing variable: {var_out}"
+                    )
+
+                if "time" not in ds.coords:
+                    raise ValueError(
+                        "Missing time coordinate"
+                    )
+
+                # Force an actual read, not just metadata inspection.
+                ds[var_out].load()
+
+            good_files.append(f)
+
+        except Exception as e:
+
+            bad_files.append(
+                (
+                    f,
+                    type(e).__name__,
+                    str(e),
+                )
+            )
+
+            print(
+                f"BAD NETCDF: {f}\n"
+                f"  {type(e).__name__}: {e}"
+            )
+
+    print(
+        f"\nValid files: {len(good_files)}"
+    )
+
+    print(
+        f"Invalid files: {len(bad_files)}"
+    )
+    
+    if not good_files:
+        raise FileNotFoundError(
+            "No valid 6-hour NetCDF files found."
+        )
+
     ds_6h = xr.open_mfdataset(
-        files,
+        good_files,
         combine="by_coords",
+        engine="netcdf4",
+        parallel=False,
     )
 
     data_6h = (
@@ -812,7 +943,7 @@ if __name__ == "__main__":
         # passed the 75% raw-scan completeness test above.
         # ----------------------------------------------------------
 
-        if n_periods != EXPECTED_TIMESTEPS_24H:
+        if n_periods < MIN_TIMESTEPS_24H:
 
             print(
                 f"Skipping 24h period "
@@ -856,26 +987,25 @@ if __name__ == "__main__":
             )
         )
 
-        if not actual_times.equals(
-            expected_times
+        # Check that all available timestamps are expected
+        # and that at least 3 of the 4 periods are present.
+
+        valid_times = actual_times.isin(expected_times).all()
+
+        if (
+            not valid_times
+            or len(actual_times) < MIN_TIMESTEPS_24H
         ):
 
             print(
                 f"Skipping 24h period "
                 f"{timestamp:%Y-%m-%d %H:%M} -> "
                 f"{period_end:%Y-%m-%d %H:%M}: "
-                f"unexpected 6h timestamps"
+                f"invalid or insufficient 6h timestamps"
             )
 
-            print(
-                f"  Expected: "
-                f"{list(expected_times)}"
-            )
-
-            print(
-                f"  Found: "
-                f"{list(actual_times)}"
-            )
+            print(f"  Expected: {list(expected_times)}")
+            print(f"  Found: {list(actual_times)}")
 
             daily_incomplete += 1
 

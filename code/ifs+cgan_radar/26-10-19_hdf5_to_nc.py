@@ -14,7 +14,7 @@ from concurrent.futures import ProcessPoolExecutor
 import os
 
 
-BASE_DIR = Path('/Volumes/Rain/new_radar_hdf5_sample')
+BASE_DIR = Path('/Users/matthewwright/Downloads/new_radar_hdf5_sample')
 REFERENCE_NC = Path('../../data/example_grids/eg_radar_grid.nc')
 OUTPUT_DIR = Path('/Users/matthewwright/Downloads/test_hdf_files_simple')
 HDF5_GLOB = '*.h5'

@@ -14,9 +14,9 @@ from concurrent.futures import ProcessPoolExecutor
 import os
 
 
-BASE_DIR = Path('/Volumes/Rain/new_radar_hdf5_sample')
+BASE_DIR = Path('/Users/matthewwright/Downloads/new_radar_hdf5_sample')
 REFERENCE_NC = Path('../../data/example_grids/eg_radar_grid.nc')
-OUTPUT_DIR = Path('/Users/matthewwright/Downloads/test_hdf_files_cmax')
+OUTPUT_DIR = Path('/Users/matthewwright/Downloads/test_hdf_files_cmax_nopyart')
 HDF5_GLOB = '*.h5'
 FOLDER_REGEX = r'\d{4}-\d{2}-\d{2}'
 TIMESTAMP_REGEX = r'(?P<date>\d{4}-\d{2}-\d{2})_(?P<hms>\d{2}-\d{2}-\d{2})'
@@ -35,8 +35,8 @@ ZR_ALPHA = 200.0 #same as MDV files
 ZR_BETA = 1.455 #same as MDV files
 
 #Quality control parameters
-MIN_DBZH = 10.0
-HAIL_THRESHOLD_DBZH = 55.0
+MIN_DBZH = 5.0
+HAIL_THRESHOLD_DBZH = 60.0
 
 #Parallelisation
 N_WORKERS = 2

@@ -47,7 +47,7 @@ TARGET_GRID_FILE = Path(
 )
 COARSENING_FACTOR = 9
 # Hindcast years contained in each GRIB
-YEARS = [2016, 2017]
+YEARS = [2023]
 # Expected steps
 EXPECTED_NUM_VALID_TIMES = 40
 # ============================================================

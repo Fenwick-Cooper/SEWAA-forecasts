@@ -47,6 +47,6 @@ echo "Variable:  $VAR"
 echo "Started:   $(date)"
 echo "======================================"
 
-python -u /home/m/matthewwright/radar-ensemble-cgan/dsrnngan/0000_regrid_ifs_hind_to_radar.py --variable "$VAR"
+python -u 0000_regrid_ifs_hind_to_radar.py --variable "$VAR"
 
 echo "Finished: $(date)"

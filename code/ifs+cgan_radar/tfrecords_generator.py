@@ -234,7 +234,8 @@ def write_data(year,
                num_class=CLASSES,
                log_precip=True,
                fcst_norm=True,
-               constants_list=None):
+               constants_list=None,
+               bins=[0.2,0.4,0.5]):
 
     """
     Write full-domain radar training samples to TFRecords.
@@ -315,9 +316,6 @@ def write_data(year,
     if len(leadtime) == 0:
         raise ValueError("At least one lead time must be supplied")
 
-    # Rainfall-class boundaries, mm/hr
-    bins = [0.0015, 0.003, 0.0045]
-
     assert num_class == 4
 
     print("=" * 70)
@@ -380,40 +378,57 @@ def write_data(year,
     # into individual training samples.
     # ------------------------------------------------------------
 
-    dates = get_dates(
+    available = get_dates(
         year,
         leadtime=leadtime,
         accumulation=accumulation
     )
 
-    print(f"\nNumber of initialisation dates: {len(dates)}")
+    dates = list(available.keys())
 
-    if len(dates) == 0:
-        print("No dates found. Nothing to write.")
+    date_leadtime_pairs = [
+        (date, lt)
+        for date, leadtimes in available.items()
+        for lt in leadtimes
+    ]
+
+    print(f"Initialization dates: {len(dates)}")
+    print(f"Available samples: {len(date_leadtime_pairs)}")
+
+    if not date_leadtime_pairs:
+        print("No valid samples. Nothing to write.")
         return
 
     # ------------------------------------------------------------
-    # Create ONE generator containing ALL lead times
+    # Get available dates and lead times
     # ------------------------------------------------------------
-    #
-    # With, for example:
-    #
-    #     dates = [date1, date2]
-    #     leadtime = [30, 54, 78]
-    #
-    # DataGenerator produces:
-    #
-    #     date1, 30
-    #     date1, 54
-    #     date1, 78
-    #     date2, 30
-    #     date2, 54
-    #     date2, 78
-    #
+
+    available = get_dates(
+        year,
+        leadtime=leadtime,
+        accumulation=accumulation
+    )
+
+    n_dates = len(available)
+
+    expected_samples = sum(
+        len(lts)
+        for lts in available.values()
+    )
+
+    print(f"\nNumber of initialization dates: {n_dates}")
+    print(f"Available date/leadtime pairs: {expected_samples}")
+
+    if expected_samples == 0:
+        print("No valid samples. Nothing to write.")
+        return
+
+    # ------------------------------------------------------------
+    # Create generator using available pairs only
     # ------------------------------------------------------------
 
     dgc = DataGeneratorFull(
-        dates,
+        available,
         fcst_fields=fcst_fields,
         leadtime=leadtime,
         accumulation=accumulation,
@@ -426,19 +441,10 @@ def write_data(year,
 
     print(f"Generator samples: {len(dgc)}")
 
-    expected_samples = len(dates) * len(leadtime)
-
-    print(
-        f"Expected date x leadtime combinations: "
-        f"{len(dates)} x {len(leadtime)} "
-        f"= {expected_samples}"
-    )
-
     if len(dgc) != expected_samples:
-
         print(
-            "WARNING: generator length does not equal "
-            "dates x leadtime."
+            "WARNING: Some date/leadtime pairs were rejected "
+            "by the radar loader."
         )
 
     # ------------------------------------------------------------

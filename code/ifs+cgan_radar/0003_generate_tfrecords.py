@@ -78,6 +78,7 @@ import json
 import tensorflow as tf
 import yaml
 
+bins = [0.8, 1.5, 2]
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -137,7 +138,8 @@ def generate_tfrecords(
             leadtime=leadtime,
             accumulation=accumulation,
             constants_list=constants_list,
-            patches_per_axis=3
+            patches_per_axis=3,
+            bins=bins
         )
 
     # ------------------------------------------------------------
@@ -304,6 +306,8 @@ if __name__ == "__main__":
 
     import read_config
     from tfrecords_generator import write_data
+
+    print(f"Using bins {bins}")
 
     # ------------------------------------------------------------
     # Generate

@@ -117,7 +117,10 @@ all_fcst_fields = fcst_params["DATA"]["all_fcst_fields"]
 accumulated_fields = fcst_params["DATA"]["accumulated_fields"]
 nonnegative_fields = fcst_params["DATA"]["nonnegative_fields"]
 
-local_fcst_norm = load_fcst_norm(year=2018, normalisation_path=normalisation_folder)
+try:
+    local_fcst_norm = load_fcst_norm(year=2018, normalisation_path=normalisation_folder)
+except:
+    local_fcst_norm = load_fcst_norm(year=2022, normalisation_path=normalisation_folder)
 assert local_fcst_norm is not None
 
 start_date = date(start_date_in[2], start_date_in[1], start_date_in[0])

@@ -80,29 +80,24 @@ def get_dates(year,
               leadtime=LEADTIME,
               accumulation=ACCUMULATION):
     """
-    Return forecast start dates for which the corresponding truth data exists.
+    Return forecast initialization dates and their available lead times.
 
-    `leadtime` may be either:
-        - a single integer lead time, or
-        - an iterable of lead times.
+    A date is included if truth exists for at least ONE requested
+    lead time.
 
-    If multiple lead times are supplied, a date is returned only if truth
-    exists for ALL requested lead times.
+    Returns
+    -------
+    dict
+        Mapping of initialization date (YYYYMMDD) to a list of
+        available lead times.
 
-    Each lead time denotes the START of the target accumulation interval.
-
-    For example:
-        leadtime=30, accumulation=6
-        -> target interval is +30 h to +36 h
-        -> truth file is timestamped at +30 h
-
-    Dates are returned as YYYYMMDD strings.
+        Example:
+        {
+            "20190101": [30, 54, 78],
+            "20190102": [30, 102],
+        }
     """
 
-    # Allow both:
-    #     leadtime=30
-    # and:
-    #     leadtime=[6, 12, 18, ..., 144]
     if np.isscalar(leadtime):
         leadtime = [int(leadtime)]
     else:
@@ -118,39 +113,38 @@ def get_dates(year,
 
     if accumulation not in (6, 24):
         raise ValueError(
-            f"Unsupported accumulation period: {accumulation} hours"
+            f"Unsupported accumulation period: {accumulation}"
         )
 
     start_date = datetime.date(year, 1, 1)
     end_date = datetime.date(year + 1, 1, 1)
 
-    valid_dates = []
+    valid_dates = {}
 
     for curdate in daterange(start_date, end_date):
 
-        # Forecasts initialise at 00 UTC
         fcst_dt = datetime.datetime.combine(
             curdate,
             datetime.time(0, 0)
         )
 
-        all_truth_exists = True
+        available_leadtimes = []
 
         for lt in leadtime:
 
-            # Lead time denotes the START of the target interval
             target_start_dt = fcst_dt + datetime.timedelta(
                 hours=lt
             )
 
             if accumulation == 24:
-                # 24-hour truth files use the _06 naming convention
-                truth_fname = target_start_dt.strftime("%Y%m%d_06")
+                truth_fname = target_start_dt.strftime(
+                    "%Y%m%d_06"
+                )
 
             elif accumulation == 6:
-                # 6-hour truth files are timestamped by the
-                # start of the accumulation interval
-                truth_fname = target_start_dt.strftime("%Y%m%d_%H")
+                truth_fname = target_start_dt.strftime(
+                    "%Y%m%d_%H"
+                )
 
             truth_path = os.path.join(
                 TRUTH_PATH,
@@ -158,12 +152,21 @@ def get_dates(year,
                 f"{truth_fname}.nc"
             )
 
-            if not os.path.exists(truth_path):
-                all_truth_exists = False
-                break
+            if os.path.isfile(truth_path):
+                available_leadtimes.append(lt)
 
-        if all_truth_exists:
-            valid_dates.append(curdate.strftime("%Y%m%d"))
+        if available_leadtimes:
+            valid_dates[curdate.strftime("%Y%m%d")] = (
+                available_leadtimes
+            )
+
+    total_samples = sum(
+        len(lts) for lts in valid_dates.values()
+    )
+
+    print(f"Year: {year}")
+    print(f"Valid initialization dates: {len(valid_dates)}")
+    print(f"Available date/leadtime combinations: {total_samples}")
 
     return valid_dates
 
@@ -743,15 +746,57 @@ def load_fcst_norm(year=2018, normalisation_path=None):
         return pickle.load(f)
 
 
+# ------------------------------------------------------------
+# Load forecast normalisations (2018, fallback to 2022)
+# ------------------------------------------------------------
+
 try:
     if NORMALISATION_PATH is not None:
-        print("Loading forecast normalisations")
-        fcst_norm = load_fcst_norm(2018)
+
+        print("\nLoading forecast normalisations")
+        print(f"NORMALISATION_PATH: {NORMALISATION_PATH}")
+
+        try:
+            fcst_norm = load_fcst_norm(2018)
+            norm_year = 2018
+
+        except Exception as e:
+            print(f"Could not load 2018 normalisations: {e}")
+            print("Trying 2022 normalisations...")
+
+            fcst_norm = load_fcst_norm(2022)
+            norm_year = 2022
+
+        print(
+            "Loaded normalisation file:",
+            os.path.join(
+                NORMALISATION_PATH,
+                f"FCSTNorm{norm_year}.pkl"
+            )
+        )
+
+        print("Available fields:", sorted(fcst_norm.keys()))
+
+        missing_fields = [
+            field for field in all_fcst_fields
+            if field not in fcst_norm
+        ]
+
+        if missing_fields:
+            raise ValueError(
+                f"Missing normalisation fields: {missing_fields}\n"
+                f"Normalisation file: "
+                f"{os.path.join(NORMALISATION_PATH, f'FCSTNorm{norm_year}.pkl')}"
+            )
+
     else:
         fcst_norm = None
-        
-except Exception:
+        print("WARNING: NORMALISATION_PATH is not configured")
+
+except Exception as e:
     fcst_norm = None
     print("******************************************")
     print("*** FORECAST NORMALISATIONS NOT LOADED ***")
+    print(f"Reason: {e}")
     print("******************************************")
+    raise

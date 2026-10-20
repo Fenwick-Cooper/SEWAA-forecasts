@@ -12,7 +12,8 @@ Supports:
 
 import numpy as np
 import tensorflow as tf
-
+import os
+import xarray as xr
 from tensorflow.keras.utils import Sequence
 
 from data import (
@@ -20,9 +21,72 @@ from data import (
     load_hires_constants,
     load_truth_and_mask,
     HOURS,
+    FCST_PATH
 )
 
 import read_config
+
+def get_forecast_available_dates(fcst_fields, dates):
+    """
+    Return dates with a 00Z initialization for every forecast field.
+
+    Supports multiple years and reads each NetCDF time coordinate
+    only once per field/year.
+    """
+
+    years = sorted({str(date)[:4] for date in dates})
+    available_dates = set()
+
+    for year in years:
+        year_available = None
+
+        for field in fcst_fields:
+
+            path = os.path.join(
+                FCST_PATH,
+                year,
+                f"{field}.nc"
+            )
+
+            if not os.path.isfile(path):
+                raise FileNotFoundError(
+                    f"Forecast file missing: {path}"
+                )
+
+            with xr.open_dataset(path) as ds:
+
+                times = ds["time"].values
+
+                field_dates = set()
+
+                for t in times:
+                    # Convert numpy datetime64 to Python datetime
+                    dt = np.datetime64(t, "h")
+
+                    date_str = np.datetime_as_string(
+                        dt,
+                        unit="h"
+                    )
+
+                    # Example: 2022-10-11T00
+                    if date_str.endswith("T00"):
+                        field_dates.add(
+                            date_str[:10].replace("-", "")
+                        )
+
+            if year_available is None:
+                year_available = field_dates
+            else:
+                year_available &= field_dates
+
+            print(
+                f"{year} {field}: "
+                f"{len(field_dates)} initialization dates"
+            )
+
+        available_dates.update(year_available or set())
+
+    return available_dates
 
 
 class DataGenerator(Sequence):
@@ -249,65 +313,55 @@ class DataGenerator(Sequence):
             self.constants = None
 
         # ========================================================
-        # Construct every:
-        #
-        #     date x leadtime
-        #
-        # combination
+        # Construct available (date, leadtime) combinations
         # ========================================================
 
-        temp_dates = np.asarray(
-            dates
-        )
+        if isinstance(dates, dict):
 
-        if len(temp_dates) == 0:
+            # New get_dates() format:
+            # {
+            #     "20190101": [30, 54, 78],
+            #     "20190102": [30, 102],
+            # }
 
+            samples = [
+                (str(date), int(lt))
+                for date, available_leadtimes in dates.items()
+                for lt in available_leadtimes
+            ]
+
+        else:
+
+            # Backward compatibility:
+            # dates is a list, so construct all combinations.
+
+            samples = [
+                (str(date), int(lt))
+                for date in dates
+                for lt in self.requested_leadtime
+            ]
+
+        if len(samples) == 0:
             raise ValueError(
-                "No dates supplied to DataGenerator"
+                "No date/leadtime combinations supplied to DataGenerator"
             )
 
-        # Example:
-        #
-        # dates:
-        #
-        #   20200101
-        #   20200102
-        #
-        # leadtime:
-        #
-        #   30
-        #   54
-        #   78
-        #
-        # becomes:
-        #
-        # dates:
-        #
-        #   20200101
-        #   20200101
-        #   20200101
-        #   20200102
-        #   20200102
-        #   20200102
-        #
-        # leadtime:
-        #
-        #   30
-        #   54
-        #   78
-        #   30
-        #   54
-        #   78
-        #
-
-        all_dates = np.repeat(
-            temp_dates,
-            len(self.requested_leadtime),
+        all_dates = np.asarray(
+            [date for date, lt in samples]
         )
 
-        all_leadtimes = np.tile(
-            self.requested_leadtime,
-            len(temp_dates),
+        all_leadtimes = np.asarray(
+            [lt for date, lt in samples],
+            dtype=int
+        )
+
+        print(
+            f"Constructed {len(samples)} available "
+            "(date, leadtime) combinations"
+        )
+
+        print(
+            f"Requested date/leadtime combinations: {len(samples)}"
         )
 
         # ========================================================
@@ -341,10 +395,24 @@ class DataGenerator(Sequence):
             "(date, leadtime) samples..."
         )
 
-        for date, ld in zip(
-            all_dates,
-            all_leadtimes,
-        ):
+        forecast_available_dates = get_forecast_available_dates(
+            self.fcst_fields,
+            all_dates
+        )
+
+        missing_forecast_count = 0
+
+        for date, ld in zip(all_dates, all_leadtimes):
+
+            # Check forecast availability
+            if str(date) not in forecast_available_dates:
+                missing_forecast_count += 1
+                print(
+                    f"Skipping missing forecast sample: "
+                    f"date={date}, leadtime={ld} h"
+                )
+                continue
+
 
             try:
 
@@ -379,6 +447,22 @@ class DataGenerator(Sequence):
             valid_leadtimes.append(
                 ld
             )
+
+        #Summary
+        print(
+            f"Forecast samples skipped: "
+            f"{missing_forecast_count}"
+        )
+
+        print(
+            f"Radar samples skipped: "
+            f"{missing_count}"
+        )
+
+        print(
+            f"Final valid samples: "
+            f"{len(valid_dates)}/{total_samples}"
+        )
 
         # ========================================================
         # Store valid samples only

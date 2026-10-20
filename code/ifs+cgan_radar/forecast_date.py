@@ -208,7 +208,10 @@ os.environ["CGAN_LOCAL_CONFIG"] = local_config_path
 from data import HOURS, denormalise, load_hires_constants, load_truth_and_mask, load_fcst_norm, logprec
 import read_config
 
-local_fcst_norm = load_fcst_norm(year=2018, normalisation_path=normalisation_folder)
+try:
+    local_fcst_norm = load_fcst_norm(year=2018, normalisation_path=normalisation_folder)
+except:
+    local_fcst_norm = load_fcst_norm(year=2022, normalisation_path=normalisation_folder)
 assert local_fcst_norm is not None
 
 read_config.set_gpu_mode()  # set up whether to use GPU, and mem alloc mode

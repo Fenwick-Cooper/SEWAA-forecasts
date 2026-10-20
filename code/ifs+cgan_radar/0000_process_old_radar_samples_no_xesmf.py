@@ -1,5 +1,6 @@
 #Required conda environment (Mac/Linux):
 # conda create -n radar_processing -c conda-forge --override-channels python=3.12 numpy pandas xarray dask scipy netcdf4 h5netcdf arm_pyart matplotlib bottleneck cftime -y
+# conda activate radar_processing
 
 from pathlib import Path
 import re

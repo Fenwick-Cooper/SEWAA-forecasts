@@ -43,16 +43,90 @@ AOPP_MW_5CONSTANTS_MULTILEAD:
     TFRecords:
         tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/cGAN/UK_chenies/tfrecords_5con_multilead'
 
-AOPP_MW_RWANDA:
+AOPP_MW_RWANDA_6H_2SEASONS:
     GENERAL:
-        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/processed/6h'
-        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/processed/6h/mask'
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/FMAM2020_SONDJ202223/6h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/6h/mask'
         FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
         CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
-        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/IFS/norm'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
 
     TFRecords:
-        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/cgan_training/tfrecords'
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/FMAM2020_SONDJ202223/6h/tfrecords'
 
-DEFAULT_LOCAL:
-    
+AOPP_MW_RWANDA_6H_FMAM2020:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/FMAM2020/6h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/6h/mask'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
+
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/FMAM2020/6h/tfrecords'
+
+AOPP_MW_RWANDA_6H_SONDJ202223:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/SONDJ202223/6h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/6h/mask'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
+
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/SONDJ202223/6h/tfrecords'
+
+AOPP_MW_RWANDA_24H_2SEASONS:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/FMAM2020_SONDJ202223/24h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/24h/mask'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
+
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/FMAM2020_SONDJ202223/24h/tfrecords'
+
+AOPP_MW_RWANDA_24H_FMAM2020:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/FMAM2020/24h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/24h/mask'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
+
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/FMAM2020/24h/tfrecords'
+
+AOPP_MW_RWANDA_24H_SONDJ202223:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/SONDJ202223/24h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/24h/mask'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
+
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/SONDJ202223/24h/tfrecords'
+
+AOPP_MW_RWANDA_6H_FULL:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/6h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/6h/mask'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
+
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/6h/tfrecords'
+
+AOPP_MW_RWANDA_24H_FULL:
+    GENERAL:
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/24h'
+        MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/24h/mask'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/new_radar_sample/constants'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
+
+    TFRecords:
+        tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/24h/tfrecords'

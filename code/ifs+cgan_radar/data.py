@@ -215,7 +215,7 @@ def load_truth_and_mask(date,
         lon_slice = slice(lon0, lon1) if df.lon[0] < df.lon[-1] else slice(lon1, lon0)
         df = df.sel(lat=lat_slice, lon=lon_slice)
     da = df["rainfall_rate"] #MW: changed from ["precipitationCal"]
-    y = da.values
+    y = np.nan_to_num(da.values, nan=0.0) #set nan to 0
     df.close()
 
     # mask: False for valid truth data, True for invalid truth data

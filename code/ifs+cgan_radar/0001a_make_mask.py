@@ -4,9 +4,10 @@ import xarray as xr
 import os
 import argparse
 
-mean_low_threshold = 1e-5
-mean_high_threshold = 0.08
-std_threshold = 2e-5
+mean_low_threshold = 0.15
+mean_high_threshold = 3
+std_threshold = 0.15
+all_nan = True #if True, only mask places that are nan always. If False, mask places that are nan once or more.
 
 def find_any_nan_mask(
     folder,
@@ -51,7 +52,10 @@ def find_any_nan_mask(
             and year_dir.name.isdigit()
             and len(year_dir.name) == 4
         ):
-            files.extend(year_dir.glob("*.nc"))
+            files.extend(
+                f for f in year_dir.glob("*.nc")
+                if not f.name.startswith("._")
+            )
 
     files = sorted(files)
 
@@ -65,7 +69,7 @@ def find_any_nan_mask(
     # ---------------------------------------------------------
     # First file establishes the grid
     # ---------------------------------------------------------
-
+    print(f"Opening {files[0]}")
     with xr.open_dataset(files[0]) as ds:
 
         if variable not in ds:
@@ -87,7 +91,10 @@ def find_any_nan_mask(
             # these all need to contribute to the statistics.
             file_sum = da.sum(dim=other_dims, skipna=True)
             file_sum2 = (da ** 2).sum(dim=other_dims, skipna=True)
-            nan_mask = nan_mask.any(dim=other_dims)
+            if all_nan:
+                nan_mask = nan_mask.all(dim=other_dims)
+            else:
+                nan_mask = nan_mask.any(dim=other_dims)
         else:
             file_sum = da.fillna(0)
             file_sum2 = (da ** 2).fillna(0)
@@ -126,7 +133,10 @@ def find_any_nan_mask(
                 # these all need to contribute to the statistics.
                 file_sum = da.sum(dim=other_dims, skipna=True)
                 file_sum2 = (da ** 2).sum(dim=other_dims, skipna=True)
-                file_mask = file_mask.any(dim=other_dims)
+                if all_nan:
+                    file_mask = file_mask.all(dim=other_dims)
+                else:
+                    file_mask = file_mask.any(dim=other_dims)
             else:
                 file_sum = da.fillna(0)
                 file_sum2 = (da ** 2).fillna(0)
@@ -136,7 +146,10 @@ def find_any_nan_mask(
 
         file_mask = file_mask.load()
 
-        nan_mask = nan_mask | file_mask
+        if all_nan:
+            nan_mask = nan_mask & file_mask
+        else:
+            nan_mask = nan_mask | file_mask
 
     
     #Calculate mean and standard deviation of the variable across all files

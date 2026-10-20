@@ -22,7 +22,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # ------------------------------------------------------------------
 
 base_dir = Path(
-    "/Users/matthewwright/Downloads/single_precip_sample"
+    "TO EDIT"
 )
 
 SKIP_DAYS = set(Path("dates.txt").read_text().splitlines())
@@ -43,18 +43,18 @@ file_re = re.compile(r"^\d{6}\.mdv$")
 # Separate folders for the 6-hour and 24-hour products.
 OUT_FOLDER_6H = Path(
     # "/Volumes/Rain/processed_rwandan_radar/6h"
-    "/Users/matthewwright/Downloads/single_precip_sample_regridded_no_xesmf/6h"
+    "TO EDIT"
 )
 
 OUT_FOLDER_24H = Path(
     # "/Volumes/Rain/processed_rwandan_radar/24h"
-    "/Users/matthewwright/Downloads/single_precip_sample_regridded_no_xesmf/24h"
+    "TO EDIT"
 )
 
 regrid = True
 
 EXAMPLE_GRID_PATH = Path(
-    "../../data/example_grids/eg_radar_grid.nc"
+    "eg_radar_grid.nc"
 )
 
 regridding_method = "conservative_cartesian"

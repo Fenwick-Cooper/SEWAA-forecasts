@@ -36,35 +36,38 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # ------------------------------------------------------------------
 
 base_dir = Path(
-    "/Volumes/Rain/LiCie/projDir/data/mdv/precip/single"
+    "/Volumes/Rain/original_radar_precip_single"
 )
 
 # None = process all available days
 # Set of dates = process only specified days
-# RETRY_DAYS = None
-RETRY_DAYS = {
-    "20190206",
-    "20190227",
-    "20190408",
-    "20190410",
-}
+RETRY_DAYS = None
+# RETRY_DAYS = {
+#     "20190206",
+#     "20190227",
+#     "20190408",
+#     "20190410",
+# }
 
 date_re = re.compile(r"^\d{8}$")
 file_re = re.compile(r"^\d{6}\.mdv$")
 
 # Separate folders for the 6-hour and 24-hour products.
+# Separate folders for the 6-hour and 24-hour products.
 OUT_FOLDER_6H = Path(
     "/Volumes/Rain/processed_rwandan_radar/6h"
+    # "/Users/matthewwright/Downloads/single_precip_sample_regridded_with_xesmf/6h"
 )
 
 OUT_FOLDER_24H = Path(
     "/Volumes/Rain/processed_rwandan_radar/24h"
+    # "/Users/matthewwright/Downloads/single_precip_sample_regridded_with_xesmf/24h"
 )
 
 regrid = True
 
 EXAMPLE_GRID_PATH = Path(
-    "../../data/example_grids/eg_radar_grid.nc"
+    "/Users/matthewwright/git/SEWAA-forecasts-Rwanda_radar/SEWAA-forecasts/data/example_grids/eg_radar_grid.nc"
 )
 
 regridding_method = "conservative"
@@ -73,7 +76,7 @@ var_in = "rate"
 var_out = "rainfall_rate"
 
 # Number of daily directories to process simultaneously.
-N_WORKERS = 4
+N_WORKERS = 2
 
 OVERWRITE = False
 
@@ -88,8 +91,8 @@ EXPECTED_TIMESTEPS_6H = 72
 # Four 6-hour periods make one 24-hour 06:00 -> 06:00 product
 EXPECTED_TIMESTEPS_24H = 4
 
-# Require at least 75% of the expected radar scans
-MIN_COMPLETENESS = 0.75
+# Require at least 65% of the expected radar scans
+MIN_COMPLETENESS = 0.65
 
 MIN_TIMESTEPS_6H = int(
     np.ceil(
@@ -236,15 +239,21 @@ def process_day(day_dir):
                 file_field_names=True,
             )
 
-            radar_time = num2date(
-                radar.time["data"][0],
-                units=radar.time["units"],
-                calendar=radar.time.get(
-                    "calendar",
-                    "standard",
-                ),
-                only_use_cftime_datetimes=False,
-            )
+            #This is the start of the period
+            radar_time = pd.Timestamp(
+                radar.time["units"].split("since", 1)[1].strip()
+            ).tz_localize(None)
+
+            #This is the end of the period
+            # radar_time = num2date(
+            #     radar.time["data"][0],
+            #     units=radar.time["units"],
+            #     calendar=radar.time.get(
+            #         "calendar",
+            #         "standard",
+            #     ),
+            #     only_use_cftime_datetimes=False,
+            # )
 
             x = radar.point_x["data"][0, 0, :]
             y = radar.point_y["data"][0, :, 0]

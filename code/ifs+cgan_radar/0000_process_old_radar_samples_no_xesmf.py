@@ -21,29 +21,33 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # ------------------------------------------------------------------
 
 base_dir = Path(
-    "/Volumes/Rain/LiCie/projDir/data/mdv/precip/single"
+    "/Users/matthewwright/Downloads/single_precip_sample"
 )
+
+SKIP_DAYS = set(Path("dates.txt").read_text().splitlines())
 
 # None = process all available days
 # Set of dates = process only specified days
-# RETRY_DAYS = None
-RETRY_DAYS = {
-    "20190206",
-    "20190227",
-    "20190408",
-    "20190410",
-}
+RETRY_DAYS = None
+# RETRY_DAYS = {
+#     "20190206",
+#     "20190227",
+#     "20190408",
+#     "20190410",
+# }
 
 date_re = re.compile(r"^\d{8}$")
 file_re = re.compile(r"^\d{6}\.mdv$")
 
 # Separate folders for the 6-hour and 24-hour products.
 OUT_FOLDER_6H = Path(
-    "/Volumes/Rain/processed_rwandan_radar/6h"
+    # "/Volumes/Rain/processed_rwandan_radar/6h"
+    "/Users/matthewwright/Downloads/single_precip_sample_regridded_no_xesmf/6h"
 )
 
 OUT_FOLDER_24H = Path(
-    "/Volumes/Rain/processed_rwandan_radar/24h"
+    # "/Volumes/Rain/processed_rwandan_radar/24h"
+    "/Users/matthewwright/Downloads/single_precip_sample_regridded_no_xesmf/24h"
 )
 
 regrid = True
@@ -64,7 +68,7 @@ var_out = "rainfall_rate"
 # Number of daily directories to process simultaneously.
 N_WORKERS = 4
 
-OVERWRITE = False
+OVERWRITE = True
 
 # ------------------------------------------------------------
 # Completeness requirements
@@ -395,15 +399,21 @@ def process_day(day_dir):
                 file_field_names=True,
             )
 
-            radar_time = num2date(
-                radar.time["data"][0],
-                units=radar.time["units"],
-                calendar=radar.time.get(
-                    "calendar",
-                    "standard",
-                ),
-                only_use_cftime_datetimes=False,
-            )
+            #This is the start of the period
+            radar_time = pd.Timestamp(
+                radar.time["units"].split("since", 1)[1].strip()
+            ).tz_localize(None)
+
+            #This is the end of the period
+            # radar_time = num2date(
+            #     radar.time["data"][0],
+            #     units=radar.time["units"],
+            #     calendar=radar.time.get(
+            #         "calendar",
+            #         "standard",
+            #     ),
+            #     only_use_cftime_datetimes=False,
+            # )
 
             x = radar.point_x["data"][0, 0, :]
             y = radar.point_y["data"][0, :, 0]
@@ -771,6 +781,10 @@ if __name__ == "__main__":
 
     if RETRY_DAYS is not None:
         print(f"Retrying days: {sorted(RETRY_DAYS)}")
+
+    if SKIP_DAYS is not None:
+        print("Removing days that have already been processed, from dates.txt")
+        day_dirs = [d for d in day_dirs if d.name not in SKIP_DAYS]
 
     print(
         f"Found {len(day_dirs)} daily directories"

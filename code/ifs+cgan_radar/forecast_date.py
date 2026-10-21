@@ -77,6 +77,7 @@ import pathlib
 import yaml
 from datetime import datetime, date, timedelta
 import properscoring as ps
+from pathlib import Path
 
 import netCDF4 as nc
 import xarray as xr
@@ -143,7 +144,7 @@ accumulation = args.accumulation
 
 if args.leadtime is None:
     if args.accumulation == 6:
-        args.leadtime = [30, 36, 42, 48]
+        args.leadtime = [6, 12, 18, 24]
     elif args.accumulation == 24:
         args.leadtime = [6, 30, 54, 78, 102, 126, 150]
 
@@ -204,9 +205,39 @@ local_config_path = setup_params["GENERAL"]["local_config_path"]
 
 os.environ["CGAN_LOCAL_CONFIG"] = local_config_path
 
-# Setup and imports that depend on local_config_path
-from data import HOURS, denormalise, load_hires_constants, load_truth_and_mask, load_fcst_norm, logprec
+from data import (
+    HOURS,
+    denormalise,
+    load_hires_constants,
+    load_truth_and_mask,
+    load_fcst_norm,
+    logprec,
+)
 import read_config
+
+# Load forecast normalisations from forecast YAML
+normalisation_folder = Path(
+    fcst_params["INPUT"]["normalisation_folder"]
+)
+
+if not normalisation_folder.is_absolute():
+    normalisation_folder = (
+        Path(args.fcst_yaml_file).resolve().parent / normalisation_folder
+    ).resolve()
+
+try:
+    local_fcst_norm = load_fcst_norm(
+        year=2018,
+        normalisation_path=str(normalisation_folder)
+    )
+except FileNotFoundError:
+    print("2018 normalisations not found. Trying 2022...")
+    local_fcst_norm = load_fcst_norm(
+        year=2022,
+        normalisation_path=str(normalisation_folder)
+    )
+
+print(f"Forecast normalisations loaded from: {normalisation_folder}")
 
 try:
     local_fcst_norm = load_fcst_norm(year=2018, normalisation_path=normalisation_folder)

@@ -13,23 +13,23 @@
 
 MODEL:
     folder: "../../models/ifs+cgan_radar_6h"
-    checkpoint: 26880
+    checkpoint: 30336
     accumulation: 6
 
 DATA:
     crop_to_bounds: True
     bounds: [-35.06, 15.94, 3.26, 51.06] #bounds: [lat_min, lon_min, lat_max, lon_max]
     all_fcst_fields:
-        - mucape
-        - cp
-        - tcc
-        - sp
-        - ssr
-        - t2m
-        - tciw
         - tclw
+        - tciw
+        - sp
         - tcw
         - tcwv
+        - cp
+        - u10
+        - v10
+        - t2m
+        - ssr
         - tp
         - u700
         - v700
@@ -38,11 +38,11 @@ DATA:
         - cp
         - ssr
         - tp
+        - lsp
 
     nonnegative_fields:
-        - mucape
         - cp
-        - tcc
+        - mcc
         - sp
         - ssr
         - t2m
@@ -51,6 +51,7 @@ DATA:
         - tcw
         - tcwv
         - tp
+        - lsp
 
 INPUT:
     truth_folder: '/to/edit/if/you/want/to/calculate/crps'

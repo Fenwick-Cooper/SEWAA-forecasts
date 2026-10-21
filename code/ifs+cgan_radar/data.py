@@ -747,56 +747,61 @@ def load_fcst_norm(year=2018, normalisation_path=None):
 
 
 # ------------------------------------------------------------
-# Load forecast normalisations (2018, fallback to 2022)
+# Load forecast normalisations
 # ------------------------------------------------------------
 
-try:
-    if NORMALISATION_PATH is not None:
+fcst_norm = None
+norm_year = None
 
-        print("\nLoading forecast normalisations")
-        print(f"NORMALISATION_PATH: {NORMALISATION_PATH}")
 
+def initialise_fcst_norm(normalisation_path=None, years=(2018, 2022)):
+    """
+    Initialise forecast normalisations.
+
+    For forecast generation, pass the normalisation folder
+    from the forecast YAML.
+
+    For training/hindcasts, defaults to NORMALISATION_PATH
+    from the data paths configuration.
+    """
+    global fcst_norm, norm_year
+
+    if normalisation_path is None:
+        normalisation_path = NORMALISATION_PATH
+
+    if normalisation_path is None:
+        raise ValueError("No normalisation path configured")
+
+    for year in years:
         try:
-            fcst_norm = load_fcst_norm(2018)
-            norm_year = 2018
-
-        except Exception as e:
-            print(f"Could not load 2018 normalisations: {e}")
-            print("Trying 2022 normalisations...")
-
-            fcst_norm = load_fcst_norm(2022)
-            norm_year = 2022
-
-        print(
-            "Loaded normalisation file:",
-            os.path.join(
-                NORMALISATION_PATH,
-                f"FCSTNorm{norm_year}.pkl"
-            )
-        )
-
-        print("Available fields:", sorted(fcst_norm.keys()))
-
-        missing_fields = [
-            field for field in all_fcst_fields
-            if field not in fcst_norm
-        ]
-
-        if missing_fields:
-            raise ValueError(
-                f"Missing normalisation fields: {missing_fields}\n"
-                f"Normalisation file: "
-                f"{os.path.join(NORMALISATION_PATH, f'FCSTNorm{norm_year}.pkl')}"
+            loaded_norm = load_fcst_norm(
+                year,
+                normalisation_path=normalisation_path
             )
 
-    else:
-        fcst_norm = None
-        print("WARNING: NORMALISATION_PATH is not configured")
+            missing_fields = [
+                field for field in all_fcst_fields
+                if field not in loaded_norm
+            ]
 
-except Exception as e:
-    fcst_norm = None
-    print("******************************************")
-    print("*** FORECAST NORMALISATIONS NOT LOADED ***")
-    print(f"Reason: {e}")
-    print("******************************************")
-    raise
+            if missing_fields:
+                raise ValueError(
+                    f"Missing normalisation fields: {missing_fields}"
+                )
+
+            fcst_norm = loaded_norm
+            norm_year = year
+
+            print(
+                f"Loaded forecast normalisations from "
+                f"{os.path.join(normalisation_path, f'FCSTNorm{year}.pkl')}"
+            )
+
+            return fcst_norm
+
+        except FileNotFoundError:
+            print(f"Normalisations for {year} not found")
+
+    raise FileNotFoundError(
+        f"No forecast normalisations found in {normalisation_path}"
+    )

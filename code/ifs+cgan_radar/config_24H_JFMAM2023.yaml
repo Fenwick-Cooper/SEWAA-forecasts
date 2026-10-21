@@ -48,7 +48,7 @@ MODEL:
     include_cape: False  # whether to include CAPE as an additional input channel (only for 'normal' problem type)
 
 SETUP: #MW: When you train the model, the results go into this folder
-    log_folder: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/cgan_training/logs_24H_FMAM2020"
+    log_folder: "/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/cgan_training/logs_24H_JFMAM2023"
 
 GENERATOR:
     #MW: Currently set to these values as they worked for prev. experiments
@@ -67,7 +67,7 @@ DISCRIMINATOR:
     learning_rate_disc: 1e-5  # if training blows up, decrease this
 
 TRAIN:
-    train_years: [2020] #Use 2020 for testing; 2019 for validation
+    train_years: [2023] #Use 2020 for testing; 2019 for validation
     training_weights: [0.4, 0.3, 0.2, 0.1]  # frequency to sample from each bin
     #MW: default 160,000
     num_samples: 10_000  # total generator training samples
@@ -88,7 +88,7 @@ CONSTANTS:
     constants_list: ["elev", "lsm", "distance_from_radar_instrument", "azimuthal_sin", "azimuthal_cos"]
 
 VAL:
-    val_years: 2020  # year to draw validation data from (only used for progress.pdf)
+    val_years: 2023  # year to draw validation data from (only used for progress.pdf)
     val_size: 8  # number of examples to plot
 
 EVAL:

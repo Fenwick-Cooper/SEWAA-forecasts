@@ -47,16 +47,16 @@ AOPP_MW_RWANDA_6H_2SEASONS:
     GENERAL:
         TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/JFMAM2023_SONDJ202223/6h'
         MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/6h/mask'
-        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent'
+        FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/hindcasts/2026_radar_sample_grid_cropped_to_old_extent'
         CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/samples/new_radar_sample/constants'
-        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/2026_radar_sample_grid_cropped_to_old_extent/norm'
+        NORMALISATION_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/hindcasts/2026_radar_sample_grid_cropped_to_old_extent/norm'
 
     TFRecords:
         tfrecords_path: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/JFMAM2023_SONDJ202223/6h/tfrecords'
 
 AOPP_MW_RWANDA_6H_JFMAM2023:
     GENERAL:
-        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/JJFMAM2023/63'
+        TRUTH_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/radar_data_subsets/JFMAM2023/6h'
         MASK_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/full_radar_data/6h/mask'
         FORECAST_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/IFS/hindcasts/2026_radar_sample_grid_cropped_to_old_extent'
         CONSTANTS_PATH: '/network/group/aopp/predict/AWH029_WRIGHT_S2SPREC/rwanda_radar_data/samples/new_radar_sample/constants'

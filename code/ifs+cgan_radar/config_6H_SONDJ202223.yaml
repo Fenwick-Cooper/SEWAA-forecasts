@@ -70,7 +70,7 @@ TRAIN:
     train_years: [2022] #Use 2020 for testing; 2019 for validation
     training_weights: [0.4, 0.3, 0.2, 0.1]  # frequency to sample from each bin
     #MW: default 160,000
-    num_samples: 50_000  # total generator training samples
+    num_samples: 20_000  # total generator training samples
     steps_per_checkpoint: 64  # number of batches per checkpoint save
     #MW: more batches = more memory, better model; also slower
     batch_size: 2  # we could use 16 without CL, or 2 with CL #Makes gradient calculated by the GAN more accurate -- increasing it reduces variability at the end
